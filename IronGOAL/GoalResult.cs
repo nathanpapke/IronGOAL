@@ -82,7 +82,7 @@ public readonly struct GoalResult
         error     = _error;
     }
     
-    public static readonly GoalResult Ok = new(GoalErrorCode.None, null);
+    public static readonly GoalResult Okay = new(GoalErrorCode.None, null);
     
     public static GoalResult Fail(GoalErrorCode code, string msg) => new(code, msg);
     

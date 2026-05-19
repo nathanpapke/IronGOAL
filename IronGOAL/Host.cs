@@ -96,10 +96,10 @@ public sealed class Host : IDisposable
         
         try
         {
-            _kernel.LoadScript(resolved);
+            _kernel.LoadFile(resolved);
             _log(GoalLogSeverity.Info, GoalErrorCode.None,
                 $"Loaded script: '{resolved}'");
-            return GoalResult.Ok;
+            return GoalResult.Okay;
         }
         catch (IOException ex)
         {
@@ -138,7 +138,7 @@ public sealed class Host : IDisposable
         try
         {
             _kernel.Tick(deltaTime);
-            return GoalResult.Ok;
+            return GoalResult.Okay;
         }
         catch (Exception ex)
         {
@@ -152,94 +152,42 @@ public sealed class Host : IDisposable
     // REPL / TEST SUPPORT
     // =======================================================================
     
-    public GoalResult<string> Evaluate(string expression)
+    public object? Evaluate(string expression)
     {
         if (_disposed)
         {
-            var msg = "Cannot evaluate: runtime has been disposed.";
-            _log(GoalLogSeverity.Error, GoalErrorCode.RuntimeDisposed, msg);
-            return GoalResult<string>.Fail(GoalErrorCode.RuntimeDisposed, msg);
+            _log(GoalLogSeverity.Error, GoalErrorCode.RuntimeDisposed,
+                "Cannot evaluate: Host has been disposed.");
+            return null;
         }
         
         if (string.IsNullOrWhiteSpace(expression))
         {
-            var msg = "Expression must not be null or empty.";
-            _log(GoalLogSeverity.Warning, GoalErrorCode.EvalFailed, msg);
-            return GoalResult<string>.Fail(GoalErrorCode.EvalFailed, msg);
+            _log(GoalLogSeverity.Warning, GoalErrorCode.EvalFailed,
+                "Cannot evaluate: expression is empty.");
+            return null;
         }
         
-        string result = _kernel.Evaluate(expression);
-        return GoalResult<string>.Okay(result);
+        var result = _kernel.Evaluate(expression);
+        
+        if (result.IsFailure)
+        {
+            _log(GoalLogSeverity.Error, GoalErrorCode.EvalFailed, result.ErrorMessage);
+            return null;
+        }
+        
+        return result.Value;
     }
     
     // =======================================================================
     // CHANNEL READERS
     // =======================================================================
     
-    public GoalResult<ChannelReader<RenderCommand>> GetRenderCommands()
-    {
-        if (_disposed)
-        {
-            var msg = "Runtime has been disposed.";
-            _log(GoalLogSeverity.Error, GoalErrorCode.RuntimeDisposed, msg);
-            return GoalResult<ChannelReader<RenderCommand>>.Fail(
-                GoalErrorCode.RuntimeDisposed, msg);
-        }
-        return GoalResult<ChannelReader<RenderCommand>>.Okay(
-            _kernel.EventBus.RenderCommands);
-    }
-    
-    public GoalResult<ChannelReader<AudioCommand>> GetAudioCommands()
-    {
-        if (_disposed)
-        {
-            var msg = "Runtime has been disposed.";
-            _log(GoalLogSeverity.Error, GoalErrorCode.RuntimeDisposed, msg);
-            return GoalResult<ChannelReader<AudioCommand>>.Fail(
-                GoalErrorCode.RuntimeDisposed, msg);
-        }
-        return GoalResult<ChannelReader<AudioCommand>>.Okay(
-            _kernel.EventBus.AudioCommands);
-    }
-    
-    public GoalResult<ChannelReader<GameEvent>> GetGameEvents()
-    {
-        if (_disposed)
-        {
-            var msg = "Runtime has been disposed.";
-            _log(GoalLogSeverity.Error, GoalErrorCode.RuntimeDisposed, msg);
-            return GoalResult<ChannelReader<GameEvent>>.Fail(
-                GoalErrorCode.RuntimeDisposed, msg);
-        }
-        return GoalResult<ChannelReader<GameEvent>>.Okay(
-            _kernel.EventBus.GameEvents);
-    }
-    
-    public GoalResult<ChannelReader<Timestamped<DebugCommand>>> GetDebugCommands()
-    {
-        if (_disposed)
-        {
-            var msg = "Runtime has been disposed.";
-            _log(GoalLogSeverity.Error, GoalErrorCode.RuntimeDisposed, msg);
-            return GoalResult<ChannelReader<Timestamped<DebugCommand>>>.Fail(
-                GoalErrorCode.RuntimeDisposed, msg);
-        }
-        return GoalResult<ChannelReader<Timestamped<DebugCommand>>>.Okay(
-            _kernel.EventBus.DebugCommands);
-    }
-    
-    public GoalResult<ChannelReader<MemoryEvent>> GetMemoryEvents()
-    {
-        if (_disposed)
-        {
-            var msg = "Runtime has been disposed.";
-            _log(GoalLogSeverity.Error, GoalErrorCode.RuntimeDisposed, msg);
-            return GoalResult<ChannelReader<MemoryEvent>>.Fail(
-                GoalErrorCode.RuntimeDisposed, msg);
-        }
-        return GoalResult<ChannelReader<MemoryEvent>>.Okay(
-            _kernel.EventBus.MemoryEvents);
-    }
+    public ChannelReader<RenderCommand>              RenderCommands => _kernel.EventBus.RenderCommands;
+    public ChannelReader<AudioCommand>               AudioCommands  => _kernel.EventBus.AudioCommands;
+    public ChannelReader<GameEvent>                  GameEvents     => _kernel.EventBus.GameEvents;
+    public ChannelReader<Timestamped<DebugCommand>>  DebugCommands  => _kernel.EventBus.DebugCommands;
+    public ChannelReader<MemoryEvent>                MemoryEvents   => _kernel.EventBus.MemoryEvents;
     
     // =======================================================================
     // DISPOSAL
@@ -292,7 +240,7 @@ public sealed class Host : IDisposable
             return GoalResult.Fail(GoalErrorCode.InvalidConfig,
                 "LogHandler must not be null.");
         
-        return GoalResult.Ok;
+        return GoalResult.Okay;
     }
     
     private static string ResolveScriptPath(string path, string? scriptDirectory)

@@ -15,8 +15,7 @@ public class Kernel
     internal GoalRuntimeConfig Config     { get; }
     internal EventBus          EventBus   { get; }
     internal long              FrameId    { get; private set; }
- 
-    //private readonly SchemeRuntime    _scheme;
+    
     private readonly ProcessScheduler _scheduler;
     private bool                      _disposed;
     private readonly GoalLogHandler   _log;
@@ -53,7 +52,7 @@ public class Kernel
         }
         
         // Register all C# kernel functions as Scheme symbols.
-        //var regResult = KernelBacking.RegisterAll(_scheme, EventBus, config);
+        //var regResult = RegisterAll(_scheme, EventBus, config);
         //if (regResult.IsFailure)
         {
             //_log(GoalLogSeverity.Warning, GoalErrorCode.KernelRegistrationFailed,
@@ -61,24 +60,6 @@ public class Kernel
         }
         
         _log(GoalLogSeverity.Info, GoalErrorCode.None, "Kernel booted successfully.");
-    }
-    
-    // =======================================================================
-    // SCRIPT LOADING
-    // =======================================================================
-    
-    internal void LoadScript(string resolvedPath)
-    {
-        if (_disposed)
-        {
-            _log(GoalLogSeverity.Error, GoalErrorCode.RuntimeDisposed,
-                "Kernel.LoadScript called after disposal.");
-            return;
-        }
-        
-        //var result = _scheme.LoadFile(resolvedPath);
-        //if (result.IsFailure)
-            //_log(GoalLogSeverity.Error, result.ErrorCode, result.ErrorMessage);
     }
     
     // =======================================================================
@@ -107,22 +88,21 @@ public class Kernel
     /// tests can distinguish error strings from valid results.
     /// Never throws.
     /// </summary>
-    internal string Evaluate(string expression)
+    internal GoalResult<object> Evaluate(string expression)
     {
         if (_disposed)
-            return GoalResult<string>.Fail(GoalErrorCode.RuntimeDisposed,
-                "SchemeRuntime has been disposed.").ErrorMessage;
+            return GoalResult<object>.Fail(GoalErrorCode.RuntimeDisposed,
+                "Kernel has been disposed.");
         
         try
         {
-            object? result = expression.Eval();
-            string text = SchemeWrite(result);
-            return GoalResult<string>.Okay(text).ErrorMessage;
+            object? value = expression.Eval();
+            return GoalResult<object>.Okay(expression.Eval());
         }
         catch (Exception ex)
         {
-            return GoalResult<string>.Fail(GoalErrorCode.EvalFailed,
-                $"Scheme error evaluating '{TruncateForLog(expression)}': {ex.Message}").ErrorMessage;
+            return GoalResult<object>.Fail(GoalErrorCode.EvalFailed,
+                $"Scheme error evaluating '{TruncateForLog(expression)}': {ex.Message}");
         }
     }
     
@@ -142,7 +122,7 @@ public class Kernel
             // Wrap in begin so the file is one top-level form.
             string wrapped = $"(begin {source})";
             wrapped.Eval();
-            return GoalResult.Ok;
+            return GoalResult.Okay;
         }
         catch (IOException ex)
         {

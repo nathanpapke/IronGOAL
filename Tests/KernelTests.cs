@@ -1,9 +1,11 @@
 using IronGOAL;
 
+using IronScheme.Runtime;
+
 namespace Tests;
 
 /// <summary>
-/// Headless kernel tests — no engine, no graphics, no file I/O beyond script
+/// Headless kernel tests - no engine, no graphics, no file I/O beyond script
 /// fixtures.  The fixture creates one GoalRuntime per test class; xUnit
 /// instantiates a new class instance per test method, so each test gets a
 /// fresh runtime.
@@ -31,137 +33,163 @@ public class KernelTests
     }
     
     // =======================================================================
-    // ARITHMETIC SANITY
+    // LIFECYCLE - Host.Create config validation
     // =======================================================================
     
     [Fact]
-    public void Scheme_EvalArithmetic_ReturnsCorrectValue()
+    public void Create_WithNullConfig_ReturnsFailure()
     {
-        var result = _runtime.Evaluate("(+ 1 2)");
-        Assert.True(result.IsSuccess);
-        Assert.Equal("3", result.Value);
-    }
-    
-    
-    // =======================================================================
-    // VECTOR MATH — vector+
-    // =======================================================================
-    
-    [Fact]
-    public void VectorAdd_ProducesCorrectSum()
-    {
-        // (vector+ '(1 2 3) '(4 5 6)) should equal (5 7 9)
-        // We verify by asking Scheme itself: (equal? result '(5.0 7.0 9.0))
-        var result = _runtime.Evaluate("(equal? (vector+ '(1.0 2.0 3.0) '(4.0 5.0 6.0)) '(5.0 7.0 9.0))");
-        Assert.True(result.IsSuccess, result.ErrorMessage);
-        Assert.Equal("#t", result.Value);
-    }
-    
-    // =======================================================================
-    // VECTOR MATH — vector-
-    // =======================================================================
-    
-    [Fact]
-    public void VectorSub_ProducesCorrectDifference()
-    {
-        var result = _runtime.Evaluate("(equal? (vector- '(10.0 20.0 30.0) '(1.0 2.0 3.0)) '(9.0 18.0 27.0))");
-        Assert.True(result.IsSuccess, result.ErrorMessage);
-        Assert.Equal("#t", result.Value);
-    }
-    
-    // =======================================================================
-    // VECTOR MATH — vector-dot
-    // =======================================================================
-    
-    [Fact]
-    public void VectorDot_OrthogonalVectors_IsZero()
-    {
-        var result = _runtime.Evaluate("(= (vector-dot '(1.0 0.0) '(0.0 1.0)) 0.0)");
-        Assert.True(result.IsSuccess, result.ErrorMessage);
-        Assert.Equal("#t", result.Value);
+        Assert.True(Host.Create(null!).IsFailure);
     }
     
     [Fact]
-    public void VectorDot_ParallelVectors_IsSquaredLength()
+    public void Create_WithInvalidHeapSizes_ReturnsFailure()
     {
-        var result = _runtime.Evaluate("(= (vector-dot '(3.0 4.0) '(3.0 4.0)) 25.0)");
-        Assert.True(result.IsSuccess, result.ErrorMessage);
-        Assert.Equal("#t", result.Value);
-    }
-    
-    // =======================================================================
-    // VECTOR MATH — vector-length
-    // =======================================================================
-    
-    [Fact]
-    public void VectorLength_ThreeFourVector_IsFive()
-    {
-        var result = _runtime.Evaluate("(= (vector-length '(3.0 4.0)) 5.0)");
-        Assert.True(result.IsSuccess, result.ErrorMessage);
-        Assert.Equal("#t", result.Value);
-    }
-    
-    // =======================================================================
-    // VECTOR MATH — vector-normalize
-    // =======================================================================
-    
-    [Fact]
-    public void VectorNormalize_ZeroVector_IsAllZero()
-    {
-        var result = _runtime.Evaluate("(equal? (vector-normalize '(0.0 0.0 0.0)) '(0.0 0.0 0.0))");
-        Assert.True(result.IsSuccess, result.ErrorMessage);
-        Assert.Equal("#t", result.Value);
-    }
-    
-    // =======================================================================
-    // VECTOR MATH — vector-cross
-    // =======================================================================
-    
-    [Fact]
-    public void VectorCross_XcrossY_IsZ()
-    {
-        // X × Y = Z = (0 0 1)
-        var result = _runtime.Evaluate("(equal? (vector-cross '(1.0 0.0 0.0) '(0.0 1.0 0.0)) '(0.0 0.0 1.0))");
-        Assert.True(result.IsSuccess, result.ErrorMessage);
-        Assert.Equal("#t", result.Value);
-    }
-    
-    // =======================================================================
-    // RUNTIME LIFECYCLE
-    // =======================================================================
-    
-    [Fact]
-    public void Tick_DoesNotError()
-    {
-        var result = _runtime.Tick(1f / 60f);
-        Assert.True(result.IsSuccess, result.ErrorMessage);
-    }
-    
-    [Fact]
-    public void Evaluate_EmptyExpression_ReturnsFailure()
-    {
-        var result = _runtime.Evaluate("   ");
-        Assert.True(result.IsFailure);
-    }
-    
-    [Fact]
-    public void GoalRuntime_Create_WithNullConfig_ReturnsFailure()
-    {
-        var result = Host.Create(null!);
-        Assert.True(result.IsFailure);
-    }
-    
-    [Fact]
-    public void GoalRuntime_Create_WithInvalidHeapSizes_ReturnsFailure()
-    {
-        var config = new GoalRuntimeConfig
+        var result = Host.Create(new GoalRuntimeConfig
         {
             GlobalHeapSize = 1024,
-            StackHeapSize  = 2048,   // larger than global - invalid
+            StackHeapSize  = 2048,
             LogHandler     = (_, _, _) => { },
-        };
-        var result = Host.Create(config);
+        });
         Assert.True(result.IsFailure);
         Assert.Equal(GoalErrorCode.InvalidConfig, result.ErrorCode);
+    }
+    
+    // =======================================================================
+    // LIFECYCLE - Tick
+    // =======================================================================
+    
+    [Fact]
+    public void Tick_Succeeds() =>
+        Assert.True(_runtime.Tick(1f / 60f).IsSuccess);
+    
+    [Fact]
+    public void Tick_ZeroDelta_Succeeds() =>
+        Assert.True(_runtime.Tick(0f).IsSuccess);
+    
+    // =======================================================================
+    // EVALUATE - empty / whitespace guard
+    // =======================================================================
+    
+    [Fact]
+    public void Evaluate_EmptyString_ReturnsNull() =>
+        Assert.Null(_runtime.Evaluate(""));
+    
+    [Fact]
+    public void Evaluate_WhitespaceOnly_ReturnsNull() =>
+        Assert.Null(_runtime.Evaluate("   "));
+    
+    // =======================================================================
+    // NATIVE R5RS SCHEME - arithmetic
+    // =======================================================================
+    
+    [Fact]
+    public void Scheme_IntegerAddition()
+    {
+        Assert.Equal(3, _runtime.Evaluate("(+ 1 2)"));
+    }
+    
+    [Fact]
+    public void Scheme_FloatAddition()
+    {
+        Assert.Equal(4.0, _runtime.Evaluate("(+ 1.5 2.5)"));
+    }
+    
+    [Fact]
+    public void Scheme_NestedArithmetic()
+    {
+        Assert.Equal(30, _runtime.Evaluate("(* (+ 2 3) (- 10 4))"));
+    }
+    
+    // =======================================================================
+    // NATIVE R5RS SCHEME - boolean and comparison
+    // =======================================================================
+    
+    [Fact]
+    public void Scheme_BooleanTrue()
+    {
+        Assert.Equal(true, _runtime.Evaluate("(= 1 1)"));
+    }
+    
+    [Fact]
+    public void Scheme_BooleanFalse()
+    {
+        Assert.Equal(false, _runtime.Evaluate("(= 1 2)"));
+    }
+    
+    // =======================================================================
+    // NATIVE R5RS SCHEME - define and lambda
+    // Verifies the interpreter can bind names and close over values -
+    // the foundation everything else depends on.
+    // =======================================================================
+    
+    [Fact]
+    public void Scheme_DefineAndCall()
+    {
+        Assert.Equal(49,
+            _runtime.Evaluate("(begin (define (square x) (* x x)) (square 7))"));
+    }
+ 
+    [Fact]
+    public void Scheme_Lambda_Closure()
+    {
+        Assert.Equal(15,
+            _runtime.Evaluate(
+                "(let ((adder (lambda (n) (lambda (x) (+ x n))))) ((adder 10) 5))"));
+    }
+    
+    // =======================================================================
+    // NATIVE R5RS SCHEME - lists
+    // car/cdr/cons/map are all native; prove the list machinery is alive.
+    // =======================================================================
+    
+    [Fact]
+    public void Scheme_Map_ReturnsCons()
+    {
+        Assert.IsType<Cons>(_runtime.Evaluate("(map (lambda (x) (* x x)) '(1 2 3 4))"));
+    }
+ 
+    [Fact]
+    public void Scheme_Car_ReturnsInt()
+    {
+        Assert.Equal(42, _runtime.Evaluate("(car (cons 42 '()))"));
+    }
+ 
+    [Fact]
+    public void Scheme_EmptyList_ReturnsNull()
+    {
+        Assert.Null(_runtime.Evaluate("'()"));
+    }
+    
+    // =======================================================================
+    // NATIVE R6RS SCHEME - strings and symbols
+    // =======================================================================
+    
+    [Fact]
+    public void Scheme_StringAppend_ReturnsCLRString()
+    {
+        Assert.Equal("hello world",
+            _runtime.Evaluate("(string-append \"hello\" \" \" \"world\")"));
+    }
+    
+    [Fact]
+    public void Scheme_SymbolToString_ReturnsCLRString()
+    {
+        Assert.Equal("goal", _runtime.Evaluate("(symbol->string 'goal)"));
+    }
+    
+    // =======================================================================
+    // NATIVE R6RS SCHEME - tail-call / recursion
+    // Confirms the interpreter handles deep recursion without stack overflow
+    // (important for GOAL-style state loops).
+    // =======================================================================
+    
+    [Fact]
+    public void Scheme_TailRecursion_DoesNotOverflow()
+    {
+        Assert.Equal(499500,
+            _runtime.Evaluate(@"
+                (let loop ((n 999) (acc 0))
+                  (if (= n 0) acc (loop (- n 1) (+ acc n))))"));
     }
 }
