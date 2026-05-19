@@ -4,13 +4,13 @@ using IronGOAL.Bus;
 
 namespace IronGOAL;
 
-public sealed class GoalRuntime : IDisposable
+public sealed class Host : IDisposable
 {
     private readonly Kernel        _kernel;
     private readonly GoalLogHandler _log;
     private bool                   _disposed;
     
-    private GoalRuntime(Kernel kernel, GoalLogHandler log)
+    private Host(Kernel kernel, GoalLogHandler log)
     {
         _kernel = kernel;
         _log    = log;
@@ -20,10 +20,10 @@ public sealed class GoalRuntime : IDisposable
     // CONSTRUCTION
     // =======================================================================
     
-    public static GoalResult<GoalRuntime> Create(GoalRuntimeConfig config)
+    public static GoalResult<Host> Create(GoalRuntimeConfig config)
     {
         if (config is null)
-            return GoalResult<GoalRuntime>.Fail(
+            return GoalResult<Host>.Fail(
                 GoalErrorCode.InvalidConfig, "Config must not be null.");
         
         // Seed the static logger before anything else so that Value access
@@ -35,24 +35,24 @@ public sealed class GoalRuntime : IDisposable
         {
             config.LogHandler(GoalLogSeverity.Error,
                 validation.ErrorCode, validation.ErrorMessage);
-            return GoalResult<GoalRuntime>.Fail(
+            return GoalResult<Host>.Fail(
                 validation.ErrorCode, validation.ErrorMessage);
         }
         
         try
         {
             var kernel  = new Kernel(config);
-            var runtime = new GoalRuntime(kernel, config.LogHandler);
+            var runtime = new Host(kernel, config.LogHandler);
             config.LogHandler(GoalLogSeverity.Info,
                 GoalErrorCode.None, "GoalRuntime created successfully.");
-            return GoalResult<GoalRuntime>.Ok(runtime);
+            return GoalResult<Host>.Okay(runtime);
         }
         catch (OutOfMemoryException ex)
         {
             var msg = $"Heap allocation failed: {ex.Message}";
             config.LogHandler(GoalLogSeverity.Fatal,
                 GoalErrorCode.HeapAllocationFailed, msg);
-            return GoalResult<GoalRuntime>.Fail(
+            return GoalResult<Host>.Fail(
                 GoalErrorCode.HeapAllocationFailed, msg);
         }
         catch (Exception ex)
@@ -60,7 +60,7 @@ public sealed class GoalRuntime : IDisposable
             var msg = $"Runtime boot failed: {ex.Message}";
             config.LogHandler(GoalLogSeverity.Fatal,
                 GoalErrorCode.SchemeBootFailed, msg);
-            return GoalResult<GoalRuntime>.Fail(
+            return GoalResult<Host>.Fail(
                 GoalErrorCode.SchemeBootFailed, msg);
         }
     }
@@ -168,17 +168,8 @@ public sealed class GoalRuntime : IDisposable
             return GoalResult<string>.Fail(GoalErrorCode.EvalFailed, msg);
         }
         
-        try
-        {
-            string result = _kernel.Evaluate(expression);
-            return GoalResult<string>.Ok(result);
-        }
-        catch (Exception ex)
-        {
-            var msg = $"Scheme evaluation error: {ex.Message}";
-            _log(GoalLogSeverity.Error, GoalErrorCode.EvalFailed, msg);
-            return GoalResult<string>.Fail(GoalErrorCode.EvalFailed, msg);
-        }
+        string result = _kernel.Evaluate(expression);
+        return GoalResult<string>.Okay(result);
     }
     
     // =======================================================================
@@ -194,7 +185,7 @@ public sealed class GoalRuntime : IDisposable
             return GoalResult<ChannelReader<RenderCommand>>.Fail(
                 GoalErrorCode.RuntimeDisposed, msg);
         }
-        return GoalResult<ChannelReader<RenderCommand>>.Ok(
+        return GoalResult<ChannelReader<RenderCommand>>.Okay(
             _kernel.EventBus.RenderCommands);
     }
     
@@ -207,7 +198,7 @@ public sealed class GoalRuntime : IDisposable
             return GoalResult<ChannelReader<AudioCommand>>.Fail(
                 GoalErrorCode.RuntimeDisposed, msg);
         }
-        return GoalResult<ChannelReader<AudioCommand>>.Ok(
+        return GoalResult<ChannelReader<AudioCommand>>.Okay(
             _kernel.EventBus.AudioCommands);
     }
     
@@ -220,7 +211,7 @@ public sealed class GoalRuntime : IDisposable
             return GoalResult<ChannelReader<GameEvent>>.Fail(
                 GoalErrorCode.RuntimeDisposed, msg);
         }
-        return GoalResult<ChannelReader<GameEvent>>.Ok(
+        return GoalResult<ChannelReader<GameEvent>>.Okay(
             _kernel.EventBus.GameEvents);
     }
     
@@ -233,7 +224,7 @@ public sealed class GoalRuntime : IDisposable
             return GoalResult<ChannelReader<Timestamped<DebugCommand>>>.Fail(
                 GoalErrorCode.RuntimeDisposed, msg);
         }
-        return GoalResult<ChannelReader<Timestamped<DebugCommand>>>.Ok(
+        return GoalResult<ChannelReader<Timestamped<DebugCommand>>>.Okay(
             _kernel.EventBus.DebugCommands);
     }
     
@@ -246,7 +237,7 @@ public sealed class GoalRuntime : IDisposable
             return GoalResult<ChannelReader<MemoryEvent>>.Fail(
                 GoalErrorCode.RuntimeDisposed, msg);
         }
-        return GoalResult<ChannelReader<MemoryEvent>>.Ok(
+        return GoalResult<ChannelReader<MemoryEvent>>.Okay(
             _kernel.EventBus.MemoryEvents);
     }
     

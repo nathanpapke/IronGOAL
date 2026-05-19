@@ -52,7 +52,7 @@ public readonly struct GoalResult<T> where T : notnull
         error     = _error;
     }
     
-    public static GoalResult<T> Ok(T value)                          => new(value);
+    public static GoalResult<T> Okay(T value)                        => new(value);
     public static GoalResult<T> Fail(GoalErrorCode code, string msg) => new(code, msg);
     
     public override string ToString() => IsSuccess
