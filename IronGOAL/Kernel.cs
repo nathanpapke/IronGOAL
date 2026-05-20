@@ -53,12 +53,7 @@ public class Kernel
         }
         
         // Register all C# kernel functions as Scheme symbols.
-        //var regResult = RegisterAll(_scheme, EventBus, config);
-        //if (regResult.IsFailure)
-        {
-            //_log(GoalLogSeverity.Warning, GoalErrorCode.KernelRegistrationFailed,
-                //$"Some kernel symbols failed to register: {regResult.ErrorMessage}");
-        }
+        RegisterAll();
         
         _log(GoalLogSeverity.Info, GoalErrorCode.None, "Kernel booted successfully.");
     }
@@ -167,13 +162,60 @@ public class Kernel
         
         DefineFunction("vec3", GameMath.Vec3);
         DefineFunction("vector+", GameMath.Vector3Add);
-        DefineFunction("vector-", GameMath.Vector3Sub);
+        DefineFunction("vector-", GameMath.Vector3Subtract);
         DefineFunction("vector-scale", GameMath.Vector3Scale);
         DefineFunction("vector-dot", GameMath.Vector3Dot);
         DefineFunction("vector-cross", GameMath.Vector3Cross);
         DefineFunction("vector-length", GameMath.Vector3Length);
         DefineFunction("vector-normalize", GameMath.Vector3Normalize);
         DefineFunction("vector-distance", GameMath.Vector3Distance);
+        DefineFunction("vector-lerp", GameMath.Vector3Lerp);
+        DefineFunction("vec4", GameMath.Vec4);
+        DefineFunction("quat-identity", GameMath.QuatIdentity);
+        DefineFunction("quat-from-axis-angle", GameMath.QuatFromAxisAngle);
+        DefineFunction("quat-from-euler", GameMath.QuatFromEuler);
+        DefineFunction("quat*", GameMath.QuatMultiply);
+        DefineFunction("quat-slerp", GameMath.QuatSlerp);
+        DefineFunction("quat-to-euler", GameMath.QuatToEuler);
+        DefineFunction("quat-rotate-vec3", GameMath.QuatRotateVec3);
+        DefineFunction("matrix-identity", GameMath.MatrixIdentity);
+        DefineFunction("matrix*", GameMath.MatrixMultiply);
+        DefineFunction("matrix-inverse", GameMath.MatrixInverse);
+        DefineFunction("matrix-from-quat-trans", GameMath.MatrixFromQuatTrans);
+        DefineFunction("matrix-transform-point", GameMath.MatrixTransformPoint);
+        DefineFunction("matrix-transform-dir", GameMath.MatrixTransformDirection);
+        DefineFunction("matrix-look-at", GameMath.MatrixLookAt);
+        DefineFunction("matrix-perspective", GameMath.MatrixPerspective);
+        DefineFunction("transform-create", GameMath.TransformCreate);
+        DefineFunction("transform-get-pos", GameMath.TransformGetPosition);
+        DefineFunction("transform-set-pos!", GameMath.TransformSetPosition);
+        DefineFunction("transform-get-rot", GameMath.TransformGetRotation);
+        DefineFunction("transform-set-rot!", GameMath.TransformSetRotation);
+        DefineFunction("transform-forward", GameMath.TransformForward);
+        DefineFunction("transform-destroy!", GameMath.TransformDestroy);
+        DefineFunction("bbox-make", GameMath.BBoxMake);
+        DefineFunction("bbox-contains?", GameMath.BBoxContains);
+        DefineFunction("bbox-intersects?", GameMath.BBoxIntersects);
+        DefineFunction("bbox-center", GameMath.BBoxCenter);
+        DefineFunction("lerp", GameMath.Lerp);
+        DefineFunction("clamp", GameMath.Clamp);
+        DefineFunction("smooth-step", GameMath.SmoothStep);
+        DefineFunction("smoother-step", GameMath.SmootherStep);
+        DefineFunction("deg->rad", GameMath.DegToRad);
+        DefineFunction("rad->deg", GameMath.RadToDeg);
+        DefineFunction("wrap-angle-180", GameMath.WrapAngle180);
+        DefineFunction("angle-delta", GameMath.AngleDelta);
+        DefineFunction("units->meters", GameMath.UnitsToMeters);
+        DefineFunction("meters->units", GameMath.MetersToUnits);
+        DefineFunction("random-float", GameMath.RandomFloat);
+        DefineFunction("random-int", GameMath.RandomInt);
+        DefineFunction("random-point-in-sphere", GameMath.RandomPointInSphere);
+        DefineFunction("random-on-sphere", GameMath.RandomOnSphere);
+        DefineFunction("fabs", GameMath.Fabs);
+        DefineFunction("sqrtf", GameMath.Sqrtf);
+        DefineFunction("fequal-epsilon?", GameMath.FEqualEpsilon);
+        DefineFunction("/-signed-0-guard", GameMath.SignedDiv0Guard);
+        DefineFunction("mod-signed-0-guard", GameMath.SignedMod0Guard);
     }
     
     // =======================================================================

@@ -108,7 +108,7 @@ public static class GameMath
     /// Component-wise subtraction.
     /// Scheme: <c>(vector- a b)</c>
     /// </summary>
-    public static object Vector3Sub(object[] args)
+    public static object Vector3Subtract(object[] args)
     {
         var a = args.Length > 0 ? args[0] : null;
         var b = args.Length > 1 ? args[0] : null;
@@ -284,7 +284,7 @@ public static class GameMath
 
     /// <summary>
     /// Constructs a quaternion from an axis vector and a rotation angle in
-    /// degrees. The axis does not need to be pre-normalised.
+    /// degrees.  The axis does not need to be pre-normalised.
     /// Scheme: <c>(quat-from-axis-angle axis deg)</c>
     /// </summary>
     public static object QuatFromAxisAngle(object[] args)
@@ -746,7 +746,7 @@ public static class GameMath
     }
 
     /// <summary>
-    /// Returns the centre point of a bounding box.
+    /// Returns the center point of a bounding box.
     /// Scheme: <c>(bbox-center bbox)</c>
     /// </summary>
     public static object BBoxCenter(object[] args)
