@@ -2,6 +2,7 @@
 using IronScheme.Runtime;
 using IronScheme.Scripting;
 
+using IronGOAL.Backing;
 using IronGOAL.Bus;
 
 namespace IronGOAL;
@@ -142,7 +143,7 @@ public class Kernel
     
     /// <summary>
     /// Registers a variadic function that can be called with 'apply' or
-    /// with variable numbers of arguments. Uses CallTargetN signature.
+    /// with variable numbers of arguments.  Uses CallTargetN signature.
     /// </summary>
     private void DefineFunction(string schemeName, Func<object[], object> method)
     {
@@ -160,7 +161,19 @@ public class Kernel
     /// </summary>
     private void RegisterAll()
     {
-        //
+        // ===================================================================
+        // GAMEMATH
+        // ===================================================================
+        
+        DefineFunction("vec3", GameMath.Vec3);
+        DefineFunction("vector+", GameMath.Vector3Add);
+        DefineFunction("vector-", GameMath.Vector3Sub);
+        DefineFunction("vector-scale", GameMath.Vector3Scale);
+        DefineFunction("vector-dot", GameMath.Vector3Dot);
+        DefineFunction("vector-cross", GameMath.Vector3Cross);
+        DefineFunction("vector-length", GameMath.Vector3Length);
+        DefineFunction("vector-normalize", GameMath.Vector3Normalize);
+        DefineFunction("vector-distance", GameMath.Vector3Distance);
     }
     
     // =======================================================================
