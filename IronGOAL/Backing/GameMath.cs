@@ -366,26 +366,30 @@ public static class GameMath
     public static object QuatToEuler(object[] args)
     {
         var q = args.Length > 0 ? args[0] : null;
-
+        
         if (q is Quaternion)
         {
             Quaternion quat = (Quaternion)q;
-            float sinrCosp = 2f * (quat.W * quat.X + quat.Y * quat.Z);
-            float cosrCosp = 1f - 2f * (quat.X * quat.X + quat.Y * quat.Y);
+            
+            // Roll (rotation around Z)
+            float sinrCosp = 2f * (quat.W * quat.Z + quat.X * quat.Y);
+            float cosrCosp = 1f - 2f * (quat.Z * quat.Z + quat.Y * quat.Y);
             float roll     = MathF.Atan2(sinrCosp, cosrCosp) * Rad2DegF;
-
-            float sinp  = 2f * (quat.W * quat.Y - quat.Z * quat.X);
+            
+            // Pitch (rotation around X)
+            float sinp  = 2f * (quat.W * quat.X - quat.Z * quat.Y);
             float pitch = MathF.Abs(sinp) >= 1f
                 ? MathF.CopySign(90f, sinp)
                 : MathF.Asin(sinp) * Rad2DegF;
-
-            float sinyCosp = 2f * (quat.W * quat.Z + quat.X * quat.Y);
-            float cosyCosp = 1f - 2f * (quat.Y * quat.Y + quat.Z * quat.Z);
+            
+            // Yaw (rotation around Y)
+            float sinyCosp = 2f * (quat.W * quat.Y + quat.Z * quat.X);
+            float cosyCosp = 1f - 2f * (quat.Y * quat.Y + quat.X * quat.X);
             float yaw      = MathF.Atan2(sinyCosp, cosyCosp) * Rad2DegF;
 
             return new Vector3(pitch, yaw, roll);
         }
-
+        
         return "#f".Eval();
     }
 
@@ -653,12 +657,16 @@ public static class GameMath
     public static object TransformForward(object[] args)
     {
         var handle = args.Length > 0 ? args[0] : null;
-
+        
         if (handle is long)
         {
-            return Vector3.Transform(Vector3.UnitZ, GetTransform((long)handle).Rotation);
+            // GOAL uses a left-handed coordinate system where +Z is forward.
+            // System.Numerics is right-handed, so rotating +Z by 90° around +Y
+            // gives +X rather than -X.  Negating Z before transforming corrects
+            // for the handedness mismatch and preserves GOAL's convention.
+            return Vector3.Transform(-Vector3.UnitZ, GetTransform((long)handle).Rotation);
         }
-
+        
         return "#f".Eval();
     }
 

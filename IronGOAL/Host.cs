@@ -44,7 +44,7 @@ public sealed class Host : IDisposable
             var kernel  = new Kernel(config);
             var runtime = new Host(kernel, config.LogHandler);
             config.LogHandler(GoalLogSeverity.Info,
-                GoalErrorCode.None, "GoalRuntime created successfully.");
+                GoalErrorCode.None, "Host created successfully.");
             return GoalResult<Host>.Okay(runtime);
         }
         catch (OutOfMemoryException ex)

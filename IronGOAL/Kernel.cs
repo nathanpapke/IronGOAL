@@ -20,6 +20,7 @@ public class Kernel
     private readonly ProcessScheduler _scheduler;
     private bool                      _disposed;
     private readonly GoalLogHandler   _log;
+    private static int _schemeBooted = 0; // 0 = not booted, 1 = booted
     
     // =======================================================================
     // CONSTRUCTION
@@ -41,21 +42,29 @@ public class Kernel
         
         _scheduler = new ProcessScheduler();
         
-        // Boot IronScheme.  SchemeRuntime constructor touches .Eval() once
-        // to pay the bootstrap cost eagerly by importing R5RS.
-        try
-        {
-            "(import (rnrs r5rs (6)))".Eval();
-        }
-        catch (SchemeException e)
-        {
-            Console.WriteLine(e);
-        }
+        EnsureSchemeBoot();
         
         // Register all C# kernel functions as Scheme symbols.
         RegisterAll();
         
         _log(GoalLogSeverity.Info, GoalErrorCode.None, "Kernel booted successfully.");
+    }
+    
+    private static void EnsureSchemeBoot()
+    {
+        if (Interlocked.CompareExchange(ref _schemeBooted, 1, 0) == 0)
+        {
+            // Boot IronScheme.  SchemeRuntime constructor touches .Eval() once
+            // to pay the bootstrap cost eagerly by importing R5RS.
+            try
+            {
+                "(import (rnrs r5rs (6)))".Eval();
+            }
+            catch (SchemeException e)
+            {
+                Console.WriteLine(e);
+            }
+        }
     }
     
     // =======================================================================
