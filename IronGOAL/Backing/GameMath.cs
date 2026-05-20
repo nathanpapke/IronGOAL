@@ -288,17 +288,16 @@ public static class GameMath
     }
     
     /// <summary>
-    /// Matrix inverse.  Throws <see cref="InvalidOperationException"/> when the
-    /// matrix is singular (determinant ~= 0) to surface bad script logic early.
+    /// Matrix inverse.  Returns the identity matrix when the matrix is singular
+    /// (determinant ~= 0) to handle potential errors in the script.
     /// Scheme: <c>(matrix-inverse m)</c>
     /// </summary>
     public static Matrix4x4 MatrixInverse(Matrix4x4 m)
     {
         if (!Matrix4x4.Invert(m, out Matrix4x4 result))
         {
-            // TODO: Handle the error instead of throwing an exception.
-            throw new InvalidOperationException(
-                "GameMath.Mat4Inverse: matrix is singular and cannot be inverted.");
+            // Return the identity matrix as a fail-safe.
+            return Matrix4x4.Identity;
         }
         return result;
     }
