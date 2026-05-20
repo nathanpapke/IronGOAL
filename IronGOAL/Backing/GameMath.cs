@@ -76,8 +76,8 @@ public static class GameMath
     public static object Vec3(object[] args)
     {
         var x = args.Length > 0 ? args[0] : null;
-        var y = args.Length > 1 ? args[0] : null;
-        var z = args.Length > 2 ? args[0] : null;
+        var y = args.Length > 1 ? args[1] : null;
+        var z = args.Length > 2 ? args[2] : null;
 
         if (x is float && y is float && z is float)
         {
@@ -94,7 +94,7 @@ public static class GameMath
     public static object Vector3Add(object[] args)
     {
         var a = args.Length > 0 ? args[0] : null;
-        var b = args.Length > 1 ? args[0] : null;
+        var b = args.Length > 1 ? args[1] : null;
 
         if (a is Vector3 && b is Vector3)
         {
@@ -111,7 +111,7 @@ public static class GameMath
     public static object Vector3Subtract(object[] args)
     {
         var a = args.Length > 0 ? args[0] : null;
-        var b = args.Length > 1 ? args[0] : null;
+        var b = args.Length > 1 ? args[1] : null;
 
         if (a is Vector3 && b is Vector3)
         {
