@@ -166,7 +166,7 @@ public class Kernel
     private void RegisterAll()
     {
         // ===================================================================
-        // GAMEMATH
+        // GAME MATH
         // ===================================================================
         
         DefineFunction("vec3", GameMath.Vec3);
@@ -225,6 +225,22 @@ public class Kernel
         DefineFunction("fequal-epsilon?", GameMath.FEqualEpsilon);
         DefineFunction("/-signed-0-guard", GameMath.SignedDiv0Guard);
         DefineFunction("mod-signed-0-guard", GameMath.SignedMod0Guard);
+        
+        // ===================================================================
+        // GAME CLOCK
+        // ===================================================================
+        
+        DefineFunction("frame-time", GameClock.FrameTime);
+        DefineFunction("total-time", GameClock.TotalTime);
+        DefineFunction("frame-count", GameClock.FrameCount);
+        DefineFunction("time-scale", GameClock.TimeScale);
+        DefineFunction("set-time-scale!", GameClock.SetTimeScale);
+        DefineFunction("seconds->frames", GameClock.SecondsToFrames);
+        DefineFunction("frames->seconds", GameClock.FramesToSeconds);
+        DefineFunction("timer-start", GameClock.TimerStart);
+        DefineFunction("timer-repeat", GameClock.TimerRepeat);
+        DefineFunction("timer-cancel", GameClock.TimerCancel);
+        DefineFunction("timer-remaining", GameClock.TimerRemaining);
     }
     
     // =======================================================================
