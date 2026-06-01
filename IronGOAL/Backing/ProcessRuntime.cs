@@ -17,7 +17,7 @@ namespace IronGOAL.Backing;
 /// </summary>
 public static class ProcessRuntime
 {
-    private static ProcessScheduler? _scheduler;
+    private static ProcessScheduler? _scheduler = new();
     
     /// <summary>
     /// Called by <c>Kernel</c> after constructing its
@@ -26,10 +26,7 @@ public static class ProcessRuntime
     public static void Install(ProcessScheduler scheduler) =>
         _scheduler = scheduler;
     
-    private static ProcessScheduler Sched =>
-        _scheduler ?? throw new InvalidOperationException(
-            "[ProcessRuntime] Install() has not been called. " +
-            "Kernel must call ProcessRuntime.Install(scheduler) before RegisterAll().");
+    private static ProcessScheduler Scheduler => _scheduler;
     
     // =======================================================================
     // Process Lifecycle
@@ -44,7 +41,7 @@ public static class ProcessRuntime
         string name         = args.Length > 0 ? Convert.ToString(args[0]) ?? "" : "";
         string initialState = args.Length > 1 ? Convert.ToString(args[1]) ?? "" : "";
         long   parent       = args.Length > 2 ? Convert.ToInt64(args[2])  : 0L;
-        return Sched.Spawn(name, initialState, parent);
+        return Scheduler.Spawn(name, initialState, parent);
     }
     
     /// <summary>
@@ -55,7 +52,7 @@ public static class ProcessRuntime
     {
         long handle       = args.Length > 0 ? Convert.ToInt64(args[0]) : 0L;
         bool killChildren = args.Length > 1 && args[1] is bool b && b;
-        Sched.Kill(handle, killChildren);
+        Scheduler.Kill(handle, killChildren);
         return "nil".Eval();
     }
     
@@ -66,7 +63,7 @@ public static class ProcessRuntime
     public static object IsProcessAlive(object[] args)
     {
         long handle = args.Length > 0 ? Convert.ToInt64(args[0]) : 0L;
-        return Sched.IsAlive(handle);
+        return Scheduler.IsAlive(handle);
     }
     
     /// <summary>
@@ -76,7 +73,7 @@ public static class ProcessRuntime
     public static object GetProcessParent(object[] args)
     {
         long handle = args.Length > 0 ? Convert.ToInt64(args[0]) : 0L;
-        return Sched.GetParent(handle);
+        return Scheduler.GetParent(handle);
     }
     
     /// <summary>
@@ -86,7 +83,7 @@ public static class ProcessRuntime
     public static object GetProcessChildren(object[] args)
     {
         long   handle   = args.Length > 0 ? Convert.ToInt64(args[0]) : 0L;
-        long[] children = Sched.GetChildren(handle);
+        long[] children = Scheduler.GetChildren(handle);
         return Array.ConvertAll(children, c => (object)c);
     }
     
@@ -102,7 +99,7 @@ public static class ProcessRuntime
     {
         long   handle = args.Length > 0 ? Convert.ToInt64(args[0]) : 0L;
         string state  = args.Length > 1 ? Convert.ToString(args[1]) ?? "" : "";
-        Sched.GoState(handle, state);
+        Scheduler.GoState(handle, state);
         return "nil".Eval();
     }
     
@@ -118,7 +115,7 @@ public static class ProcessRuntime
         static Callable? ToCallable(object[] a, int i) =>
             a.Length > i && a[i] is Callable c ? c : null;
         
-        Sched.RegisterState(typeName, stateName,
+        Scheduler.RegisterState(typeName, stateName,
             ToCallable(args, 2),   // enter
             ToCallable(args, 3),   // update
             ToCallable(args, 4),   // exit
@@ -137,7 +134,7 @@ public static class ProcessRuntime
     /// </summary>
     public static object Suspend(object[] args)
     {
-        Sched.SuspendCurrent();
+        Scheduler.SuspendCurrent();
         return "nil".Eval();
     }
     
@@ -148,7 +145,7 @@ public static class ProcessRuntime
     public static object SuspendForFrames(object[] args)
     {
         int frames = args.Length > 0 ? Math.Max(1, Convert.ToInt32(args[0])) : 1;
-        Sched.SuspendCurrentForFrames(frames);
+        Scheduler.SuspendCurrentForFrames(frames);
         return "nil".Eval();
     }
     
@@ -159,7 +156,7 @@ public static class ProcessRuntime
     public static object SuspendUntil(object[] args)
     {
         if (args.Length > 0 && args[0] is Callable predicate)
-            Sched.SuspendCurrentUntil(predicate);
+            Scheduler.SuspendCurrentUntil(predicate);
         return "nil".Eval();
     }
     
@@ -176,7 +173,7 @@ public static class ProcessRuntime
         long    handle    = args.Length > 0 ? Convert.ToInt64(args[0])   : 0L;
         string  eventType = args.Length > 1 ? Convert.ToString(args[1]) ?? "" : "";
         object? data      = args.Length > 2 ? args[2] : null;
-        Sched.SendEvent(handle, eventType, data);
+        Scheduler.SendEvent(handle, eventType, data);
         return "nil".Eval();
     }
     
@@ -188,7 +185,7 @@ public static class ProcessRuntime
     {
         string  eventType = args.Length > 0 ? Convert.ToString(args[0]) ?? "" : "";
         object? data      = args.Length > 1 ? args[1] : null;
-        Sched.BroadcastEvent(eventType, data);
+        Scheduler.BroadcastEvent(eventType, data);
         return "nil".Eval();
     }
     
@@ -204,7 +201,7 @@ public static class ProcessRuntime
     {
         long handle   = args.Length > 0 ? Convert.ToInt64(args[0])  : 0L;
         int  priority = args.Length > 1 ? Convert.ToInt32(args[1]) : 0;
-        Sched.SetPriority(handle, priority);
+        Scheduler.SetPriority(handle, priority);
         return "nil".Eval();
     }
 }
