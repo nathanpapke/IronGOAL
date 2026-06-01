@@ -241,6 +241,24 @@ public class Kernel
         DefineFunction("timer-repeat", GameClock.TimerRepeat);
         DefineFunction("timer-cancel", GameClock.TimerCancel);
         DefineFunction("timer-remaining", GameClock.TimerRemaining);
+        
+        // ===================================================================
+        // PROCESS RUNTIME
+        // ===================================================================
+        
+        DefineFunction("process-spawn", ProcessRuntime.ProcessSpawn);
+        DefineFunction("process-kill", ProcessRuntime.ProcessKill);
+        DefineFunction("process-alive?", ProcessRuntime.IsProcessAlive);
+        DefineFunction("process-parent", ProcessRuntime.GetProcessParent);
+        DefineFunction("process-children", ProcessRuntime.GetProcessChildren);
+        DefineFunction("go-state", ProcessRuntime.GoState);
+        DefineFunction("define-state", ProcessRuntime.DefineState);
+        DefineFunction("suspend", ProcessRuntime.Suspend);
+        DefineFunction("suspend-for-frames", ProcessRuntime.SuspendForFrames);
+        DefineFunction("suspend-until", ProcessRuntime.SuspendUntil);
+        DefineFunction("send-event", ProcessRuntime.SendEvent);
+        DefineFunction("broadcast-event", ProcessRuntime.BroadcastEvent);
+        DefineFunction("set-process-priority!", ProcessRuntime.SetProcessPriority);
     }
     
     // =======================================================================
