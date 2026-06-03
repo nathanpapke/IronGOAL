@@ -1,6 +1,7 @@
 using System.Threading.Channels;
 
 using IronGOAL.Bus;
+using IronGOAL.Backing;
 
 namespace IronGOAL;
 
@@ -178,6 +179,42 @@ public sealed class Host : IDisposable
         
         return result.Value;
     }
+    
+    // =======================================================================
+    // QUERY SYSTEM
+    // =======================================================================
+    
+    /// <summary>
+    /// Delivers the host's answer to a pending entity query issued by a
+    /// suspended <see cref="ScriptProcess"/>.
+    ///
+    /// <para>
+    /// Call this after draining and executing a
+    /// <see cref="GameEventType.EntitySetState"/> event whose
+    /// <c>Param0</c> is a query code from <see cref="EntityQueryCode"/>
+    /// (i.e. any code whose name begins with <c>Get</c>, <c>Has</c>, or
+    /// <c>Find</c>).  The process handle to pass is
+    /// <c>GameEvent.Param3</c>, which <see cref="EntitySystem"/> stamps
+    /// automatically on every query event.
+    /// </para>
+    ///
+    /// <para>
+    /// The suspended process will wake on the next <see cref="Tick"/> and
+    /// return <paramref name="value"/> to its calling Scheme expression.
+    /// Passing <c>null</c> causes the backing method to return <c>#f</c>.
+    /// </para>
+    /// </summary>
+    /// <param name="processHandle">
+    /// The value read from <c>GameEvent.Param3</c> on the query event.
+    /// </param>
+    /// <param name="value">
+    /// The query result.  Type must match what the Scheme caller expects:
+    /// <c>bool</c> for predicates, <c>long</c> for handles,
+    /// <c>Vector3</c> / <c>Quaternion</c> for transform components,
+    /// <c>long[]</c> for multi-entity results.
+    /// </param>
+    public void AnswerEntityQuery(long processHandle, object? value)
+        => EntitySystem.DeliverQueryResponse(processHandle, value);
     
     // =======================================================================
     // CHANNEL READERS

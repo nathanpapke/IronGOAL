@@ -45,6 +45,8 @@ public class Kernel
         EnsureSchemeBoot();
         
         // Register all C# kernel functions as Scheme symbols.
+        ProcessRuntime.Install(_scheduler);
+        EntitySystem.Install(EventBus);
         RegisterAll();
         
         _log(GoalLogSeverity.Info, GoalErrorCode.None, "Kernel booted successfully.");
