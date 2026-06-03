@@ -259,6 +259,35 @@ public class Kernel
         DefineFunction("send-event", ProcessRuntime.SendEvent);
         DefineFunction("broadcast-event", ProcessRuntime.BroadcastEvent);
         DefineFunction("set-process-priority!", ProcessRuntime.SetProcessPriority);
+        
+        // ===================================================================
+        // ENTITY SYSTEM
+        // ===================================================================
+        
+        DefineFunction("entity-spawn", EntitySystem.Spawn);
+        DefineFunction("entity-destroy!", EntitySystem.Destroy);
+        DefineFunction("entity-exists?", EntitySystem.Exists);
+        DefineFunction("entity-get-pos", EntitySystem.GetPosition);
+        DefineFunction("entity-set-pos!", EntitySystem.SetPosition);
+        DefineFunction("entity-get-rot", EntitySystem.GetRotation);
+        DefineFunction("entity-set-rot!", EntitySystem.SetRotation);
+        DefineFunction("entity-get-scale", EntitySystem.GetScale);
+        DefineFunction("entity-set-scale!", EntitySystem.SetScale);
+        DefineFunction("entity-get-prop", EntitySystem.GetProperty);
+        DefineFunction("entity-set-prop!", EntitySystem.SetProperty);
+        DefineFunction("entity-has-prop?", EntitySystem.HasProperty);
+        DefineFunction("entity-has-component?", EntitySystem.HasComponent);
+        DefineFunction("entity-get-component", EntitySystem.GetComponent);
+        DefineFunction("entity-find-by-type", EntitySystem.FindByType);
+        DefineFunction("entity-find-by-tag", EntitySystem.FindByTag);
+        DefineFunction("entity-find-in-radius", EntitySystem.FindInRadius);
+        DefineFunction("entity-find-nearest", EntitySystem.FindNearest);
+        DefineFunction("entity-add-tag!", EntitySystem.AddTag);
+        DefineFunction("entity-remove-tag!", EntitySystem.RemoveTag);
+        DefineFunction("entity-has-tag?", EntitySystem.HasTag);
+        DefineFunction("entity-bind-process!", EntitySystem.BindProcess);
+        DefineFunction("entity-get-process", EntitySystem.GetProcess);
+        DefineFunction("entity-get-entity", EntitySystem.GetEntity);
     }
     
     // =======================================================================
