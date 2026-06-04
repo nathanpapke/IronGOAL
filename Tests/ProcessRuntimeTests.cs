@@ -552,7 +552,7 @@ public class ProcessRuntimeTests
     public void BroadcastEvent_DeliveredToAllLiveProcesses()
     {
         "(define be-count 0)".Eval();
-        "(define-state \"be-unit\" \"patrol\" #f #f #f (lambda (proc type data) (set! be-count (+ be-count 1))))".Eval();
+        "(define-state \"be-unit\" \"patrol\" #f #f #f (lambda (proc type data) (set! be-count (+ be-count 1)))".Eval();
         
         long u1 = Spawn("be-unit-1", "patrol");
         long u2 = Spawn("be-unit-2", "patrol");

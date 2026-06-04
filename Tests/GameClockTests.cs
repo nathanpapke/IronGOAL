@@ -7,7 +7,7 @@ namespace Tests;
 
 public class GameClockTests
 {
-    private readonly Host _host;
+    private Host _host;
     
     static readonly GoalRuntimeConfig Config = new GoalRuntimeConfig
     {
@@ -21,17 +21,7 @@ public class GameClockTests
     
     public GameClockTests()
     {
-        var config = new GoalRuntimeConfig
-        {
-            GlobalHeapSize        = 16 * 1024 * 1024,
-            StackHeapSize         =  2 * 1024 * 1024,
-            RenderChannelCapacity = 64,
-            EnableMemoryTracking  = false,
-            EnableDebugChannel    = false,
-            LogHandler            = (_, _, _) => { },
-        };
-        
-        var result = Host.Create(config);
+        var result = Host.Create(Config);
         Assert.True(result.IsSuccess,
             $"Host.Create failed: {result.ErrorMessage}");
         _host = result.Value!;
