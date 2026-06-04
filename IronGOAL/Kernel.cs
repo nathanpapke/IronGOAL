@@ -291,6 +291,30 @@ public class Kernel
         DefineFunction("entity-bind-process!", EntitySystem.BindProcess);
         DefineFunction("entity-get-process", EntitySystem.GetProcess);
         DefineFunction("entity-get-entity", EntitySystem.GetEntity);
+        
+        // ===================================================================
+        // ANIMATION SYSTEM
+        // ===================================================================
+        
+        DefineFunction("anim-play", AnimationSystem.Play);
+        DefineFunction("anim-play-blend", AnimationSystem.PlayBlend);
+        DefineFunction("anim-stop", AnimationSystem.Stop);
+        DefineFunction("anim-pause", AnimationSystem.Pause);
+        DefineFunction("anim-current", AnimationSystem.Current);
+        DefineFunction("anim-current-frame", AnimationSystem.CurrentFrame);
+        DefineFunction("anim-length", AnimationSystem.Length);
+        DefineFunction("anim-playing?", AnimationSystem.IsPlaying);
+        DefineFunction("anim-blending?", AnimationSystem.IsBlending);
+        DefineFunction("define-blend-tree", AnimationSystem.DefineBlendTree);
+        DefineFunction("set-blend-param!", AnimationSystem.SetBlendTreeParam);
+        DefineFunction("get-blend-param", AnimationSystem.GetBlendTreeParam);
+        DefineFunction("get-joint-transform", AnimationSystem.GetJointTransform);
+        DefineFunction("set-joint-override!", AnimationSystem.SetJointOverride);
+        DefineFunction("clear-joint-override!", AnimationSystem.ClearJointOverride);
+        DefineFunction("anim-on-event", AnimationSystem.OnEvent);
+        DefineFunction("set-ik-target!", AnimationSystem.SetIKTarget);
+        DefineFunction("set-ik-weight!", AnimationSystem.SetIKWeight);
+        
     }
     
     // =======================================================================

@@ -270,7 +270,7 @@ public class AnimationSystem
     /// Suspends for one frame; returns the clip name string or <c>#f</c>.
     /// <para>Scheme: <c>(anim-current entity)</c></para>
     /// </summary>
-    public static object CurrentAnim(object[] args)
+    public static object Current(object[] args)
     {
         if (args.Length == 0 || args[0] is not long handle)
             return "#f".Eval();
@@ -297,7 +297,7 @@ public class AnimationSystem
     /// <para>Scheme: <c>(anim-length 'run-cycle)</c></para>
     /// <para>Param1 = clip name hash.</para>
     /// </summary>
-    public static object AnimLength(object[] args)
+    public static object Length(object[] args)
     {
         if (args.Length == 0 || args[0] is not string clipName)
             return "#f".Eval();
@@ -517,7 +517,7 @@ public class AnimationSystem
     /// When the host detects the animation event it delivers it to the
     /// subscribing process via <c>send-event</c> through the scheduler.  The
     /// process handles it in its normal <see cref="StateDefinition.EventProc"/>
-    /// — no C# callback table or additional host entry point is required.
+    /// - no C# callback table or additional host entry point is required.
     /// </para>
     ///
     /// <para>Scheme:</para>
