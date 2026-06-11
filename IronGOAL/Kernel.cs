@@ -21,6 +21,8 @@ public class Kernel
     private bool                      _disposed;
     private readonly GoalLogHandler   _log;
     private static int _schemeBooted = 0; // 0 = not booted, 1 = booted
+    private static TextWriter? _schemeWriter; // GC anchor
+    private static int _writerInstalled = 0;
     
     // =======================================================================
     // CONSTRUCTION
@@ -57,15 +59,16 @@ public class Kernel
     {
         if (Interlocked.CompareExchange(ref _schemeBooted, 1, 0) == 0)
         {
-            // Boot IronScheme.  SchemeRuntime constructor touches .Eval() once
-            // to pay the bootstrap cost eagerly by importing R5RS.
+            Console.SetError(new SchemeOutputWriter(Console.Error));
+            
             try
             {
                 "(import (rnrs r5rs (6)))".Eval();
             }
-            catch (SchemeException e)
+            catch (Exception e)
             {
-                Console.WriteLine(e);
+                string message = e.ToString().Replace("\r\n", "\n").Replace("\n", "\r\n");
+                Console.Error.WriteLine($"[IronGOAL] Scheme boot warning: {message}");
             }
         }
     }
@@ -109,8 +112,10 @@ public class Kernel
         }
         catch (Exception ex)
         {
-            return GoalResult<object>.Fail(GoalErrorCode.EvalFailed,
-                $"Scheme error evaluating '{TruncateForLog(expression)}': {ex.Message}");
+            string message = ex.ToString().Replace("\r\n", "\n").Replace("\n", "\r\n");
+            string trunk = TruncateForLog(expression).ToString().Replace("\r\n", "\n").Replace("\n", "\r\n");
+            var msg = $"Scheme error evaluating\r\n{trunk}\r\n{message}";
+            return GoalResult<object>.Fail(GoalErrorCode.EvalFailed, msg);
         }
     }
     

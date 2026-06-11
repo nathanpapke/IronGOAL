@@ -110,7 +110,8 @@ public sealed class Host : IDisposable
         }
         catch (Exception ex)
         {
-            var msg = $"Script evaluation failed for '{resolved}': {ex.Message}";
+            string message = ex.ToString().Replace("\r\n", "\n").Replace("\n", "\r\n");
+            var msg = $"Script evaluation failed for '{resolved}': {message}";
             _log(GoalLogSeverity.Error, GoalErrorCode.ScriptEvalFailed, msg);
             return GoalResult.Fail(GoalErrorCode.ScriptEvalFailed, msg);
         }
