@@ -70,4 +70,15 @@ public sealed class GoalRuntimeConfig
     /// Default: true (on) - turn off for production.
     /// </summary>
     public bool EnableDebugChannel { get; init; } = true;
+    
+    // =======================================================================
+    // SCHEME ENVIRONMENT
+    // =======================================================================
+    
+    /// <summary>
+    /// An existing IronScheme top-level environment object - the value
+    /// returned by <c>"(interaction-environment)".Eval()</c> - obtained by
+    /// the host program before constructing this <c>Host</c>.
+    /// </summary>
+    public object? SchemeEnvironment { get; init; } = null;
 }

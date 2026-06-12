@@ -16,6 +16,7 @@ public class Kernel
     internal GoalRuntimeConfig Config     { get; }
     internal EventBus          EventBus   { get; }
     internal long              FrameId    { get; private set; }
+    internal object SchemeEnvironment     { get; }
     
     private readonly ProcessScheduler _scheduler;
     private bool                      _disposed;
@@ -44,7 +45,12 @@ public class Kernel
         
         _scheduler = new ProcessScheduler();
         
-        EnsureSchemeBoot();
+        // Use the host-provided environment if given; otherwise obtain the
+        // process's interaction-environment ourselves.
+        SchemeEnvironment = config.SchemeEnvironment
+                            ?? "(interaction-environment)".Eval();
+        
+        RunBootSequence(config);
         
         // Register all C# kernel functions as Scheme symbols.
         ProcessRuntime.Install(_scheduler);
@@ -55,7 +61,7 @@ public class Kernel
         _log(GoalLogSeverity.Info, GoalErrorCode.None, "Kernel booted successfully.");
     }
     
-    private static void EnsureSchemeBoot()
+    internal static void RunBootSequence(GoalRuntimeConfig config)
     {
         if (Interlocked.CompareExchange(ref _schemeBooted, 1, 0) == 0)
         {
@@ -107,14 +113,14 @@ public class Kernel
         
         try
         {
-            object? value = expression.Eval();
+            object value = expression.EvalWithEnvironmentInstance(SchemeEnvironment);
             return GoalResult<object>.Okay(expression.Eval());
         }
         catch (Exception ex)
         {
             string message = ex.ToString().Replace("\r\n", "\n").Replace("\n", "\r\n");
             string trunk = TruncateForLog(expression).ToString().Replace("\r\n", "\n").Replace("\n", "\r\n");
-            var msg = $"Scheme error evaluating\r\n{trunk}\r\n{message}";
+            var msg = $"Scheme error evaluating:\r\n{trunk}\r\n{message}";
             return GoalResult<object>.Fail(GoalErrorCode.EvalFailed, msg);
         }
     }
@@ -132,9 +138,11 @@ public class Kernel
         try
         {
             string source = File.ReadAllText(path);
+            
             // Wrap in begin so the file is one top-level form.
             string wrapped = $"(begin {source})";
             wrapped.Eval();
+            
             return GoalResult.Okay;
         }
         catch (IOException ex)

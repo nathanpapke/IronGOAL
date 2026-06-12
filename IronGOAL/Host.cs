@@ -18,6 +18,23 @@ public sealed class Host : IDisposable
     }
     
     // =======================================================================
+    // SCHEME ENVIRONMENT
+    // =======================================================================
+    
+    /// <summary>
+        /// The IronScheme top-level environment this <see cref="Host"/>'s
+        /// <c>Kernel</c> registered its symbols into — either the value passed
+        /// via <see cref="GoalRuntimeConfig.SchemeEnvironment"/>, or the one
+        /// IronGOAL obtained for itself if none was passed.
+        ///
+        /// Pass this to a second kernel's
+        /// <see cref="GoalRuntimeConfig.SchemeEnvironment"/> to keep both
+        /// kernels' symbol tables in the same namespace, even if this
+        /// <see cref="Host"/> is the one that ended up creating it.
+        /// </summary>
+    public object SchemeEnvironment => _kernel.SchemeEnvironment;
+    
+    // =======================================================================
     // CONSTRUCTION
     // =======================================================================
     
