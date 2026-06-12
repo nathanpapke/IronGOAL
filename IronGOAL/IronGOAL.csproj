@@ -10,4 +10,8 @@
       <PackageReference Include="IronScheme.Core" Version="1.0.603" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Scripting\" />
+    </ItemGroup>
+
 </Project>
