@@ -2,6 +2,7 @@ using System.Threading.Channels;
 
 using IronGOAL.Bus;
 using IronGOAL.Backing;
+using IronGOAL.Scripting;
 
 namespace IronGOAL;
 
@@ -22,16 +23,16 @@ public sealed class Host : IDisposable
     // =======================================================================
     
     /// <summary>
-        /// The IronScheme top-level environment this <see cref="Host"/>'s
-        /// <c>Kernel</c> registered its symbols into — either the value passed
-        /// via <see cref="GoalRuntimeConfig.SchemeEnvironment"/>, or the one
-        /// IronGOAL obtained for itself if none was passed.
-        ///
-        /// Pass this to a second kernel's
-        /// <see cref="GoalRuntimeConfig.SchemeEnvironment"/> to keep both
-        /// kernels' symbol tables in the same namespace, even if this
-        /// <see cref="Host"/> is the one that ended up creating it.
-        /// </summary>
+    /// The IronScheme top-level environment this <see cref="Host"/>'s
+    /// <c>Kernel</c> registered its symbols into — either the value passed
+    /// via <see cref="GoalRuntimeConfig.SchemeEnvironment"/>, or the one
+    /// IronGOAL obtained for itself if none was passed.
+    ///
+    /// Pass this to a second kernel's
+    /// <see cref="GoalRuntimeConfig.SchemeEnvironment"/> to keep both
+    /// kernels' symbol tables in the same namespace, even if this
+    /// <see cref="Host"/> is the one that ended up creating it.
+    /// </summary>
     public object SchemeEnvironment => _kernel.SchemeEnvironment;
     
     // =======================================================================
@@ -114,7 +115,14 @@ public sealed class Host : IDisposable
         
         try
         {
-            _kernel.LoadFile(resolved);
+            var loadResult = _kernel.LoadFile(resolved);
+            
+            if (loadResult.IsFailure)
+            {
+                _log(GoalLogSeverity.Error, loadResult.ErrorCode, loadResult.ErrorMessage);
+                return loadResult;
+            }
+            
             _log(GoalLogSeverity.Info, GoalErrorCode.None,
                 $"Loaded script: '{resolved}'");
             return GoalResult.Okay;
@@ -196,6 +204,41 @@ public sealed class Host : IDisposable
         }
         
         return result.Value;
+    }
+    
+    /// <summary>
+    /// Read and evaluate exactly one top-level Scheme form, returning a
+    /// <see cref="FormResult"/> instead of the bare <c>object?</c> that
+    /// <see cref="Evaluate"/> returns. Use this for a REPL / command-window
+    /// surface where the caller needs to distinguish "evaluated to
+    /// <c>#f</c>/<c>#&lt;unspecified&gt;</c>" from "failed", and wants the
+    /// failure message without re-deriving it from logs.
+    /// 
+    /// <para>
+    /// Only the first top-level form in <paramref name="expression"/> is read
+    /// and evaluated; trailing content is ignored. Logs at
+    /// <see cref="GoalLogSeverity.Error"/> with <see cref="GoalErrorCode.EvalFailed"/>
+    /// on failure, same as <see cref="Evaluate"/>.
+    /// </para>
+    /// </summary>
+    /// <param name="expression">Expression to evaluate.</param>
+    /// <returns>Result of evaluation.</returns>
+    public FormResult EvaluateForm(string expression)
+    {
+        if (_disposed)
+            return FormResult.Failed(new SchemeForm(null, 0, expression),
+                "Cannot evaluate: Host has been disposed.");
+        
+        if (string.IsNullOrWhiteSpace(expression))
+            return FormResult.Failed(new SchemeForm(null, 0, expression),
+                "Cannot evaluate: expression is empty.");
+        
+        var result = _kernel.EvaluateForm(expression);
+        
+        if (!result.Success)
+            _log(GoalLogSeverity.Error, GoalErrorCode.EvalFailed, result.ErrorMessage!);
+        
+        return result;
     }
     
     // =======================================================================
