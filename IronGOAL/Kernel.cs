@@ -4,6 +4,7 @@ using IronScheme.Scripting;
 
 using IronGOAL.Backing;
 using IronGOAL.Bus;
+using IronGOAL.Scripting;
 
 namespace IronGOAL;
 
@@ -24,6 +25,7 @@ public class Kernel
     private static int _schemeBooted = 0; // 0 = not booted, 1 = booted
     private static TextWriter? _schemeWriter; // GC anchor
     private static int _writerInstalled = 0;
+    private readonly ScriptLoader _scriptLoader;
     
     // =======================================================================
     // CONSTRUCTION
@@ -51,6 +53,8 @@ public class Kernel
                             ?? "(interaction-environment)".Eval();
         
         RunBootSequence(config);
+        
+        _scriptLoader = new ScriptLoader(SchemeEnvironment);
         
         // Register all C# kernel functions as Scheme symbols.
         ProcessRuntime.Install(_scheduler);
@@ -114,15 +118,33 @@ public class Kernel
         try
         {
             object value = expression.EvalWithEnvironmentInstance(SchemeEnvironment);
-            return GoalResult<object>.Okay(expression.Eval());
+            return GoalResult<object>.Okay(value);
         }
         catch (Exception ex)
         {
             string message = ex.ToString().Replace("\r\n", "\n").Replace("\n", "\r\n");
-            string trunk = TruncateForLog(expression).ToString().Replace("\r\n", "\n").Replace("\n", "\r\n");
+            string trunk = TruncateForLog(expression).Replace("\r\n", "\n").Replace("\n", "\r\n");
             var msg = $"Scheme error evaluating:\r\n{trunk}\r\n{message}";
             return GoalResult<object>.Fail(GoalErrorCode.EvalFailed, msg);
         }
+    }
+    
+    /// <summary>
+    /// Read and evaluate exactly one top-level Scheme form - the REPL /
+    /// command-window primitive.  See <see cref="ScriptLoader.EvaluateExpression"/>
+    /// for the read/eval semantics (only the first form in
+    /// <paramref name="expression"/> is evaluated; <see cref="SchemeForm.Index"/>
+    /// is always 0).  Never throws.
+    /// </summary>
+    /// <param name="expression">Expression to evaluate.</param>
+    /// <returns>Result of evaluation.</returns>
+    internal FormResult EvaluateForm(string expression)
+    {
+        if (_disposed)
+            return FormResult.Failed(new SchemeForm(null, 0, expression),
+                "Kernel has been disposed.");
+
+        return _scriptLoader.EvaluateExpression(expression);
     }
     
     /// <summary>
@@ -135,26 +157,7 @@ public class Kernel
             return GoalResult.Fail(GoalErrorCode.RuntimeDisposed,
                 "SchemeRuntime has been disposed.");
         
-        try
-        {
-            string source = File.ReadAllText(path);
-            
-            // Wrap in begin so the file is one top-level form.
-            string wrapped = $"(begin {source})";
-            wrapped.Eval();
-            
-            return GoalResult.Okay;
-        }
-        catch (IOException ex)
-        {
-            return GoalResult.Fail(GoalErrorCode.ScriptReadFailed,
-                $"Cannot read '{path}': {ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return GoalResult.Fail(GoalErrorCode.ScriptEvalFailed,
-                $"Scheme error in '{path}': {ex.Message}");
-        }
+        return _scriptLoader.LoadFile(path);
     }
     
     // =======================================================================
