@@ -19,20 +19,20 @@ public static class GameMath
     // =======================================================================
     // CONSTANTS
     // =======================================================================
-
+    
     /// <summary>GOAL fixed-point scale: 1 unit == 1/4096 metre.</summary>
     public const float UnitsPerMeter = 4096f;
-
+    
     private const float Deg2RadF = MathF.PI / 180f;
     private const float Rad2DegF = 180f / MathF.PI;
-
+    
     // =======================================================================
     // THREAD-LOCAL RANDOM (avoids lock overhead in per-frame script calls)
     // =======================================================================
-
+    
     [ThreadStatic]
     private static Random? _rng;
-
+    
     private static Random Rng
     {
         get
@@ -48,45 +48,74 @@ public static class GameMath
             return _rng;
         }
     }
-
+    
     // =======================================================================
     // TRANSFORM HANDLE POOL
     // =======================================================================
-
+    
     private record struct TransformData(Vector3 Position, Quaternion Rotation, Vector3 Scale);
-
+    
     private static readonly ConcurrentDictionary<long, TransformData> _transforms = new();
     private static long _nextHandle;
-
+    
     private static TransformData GetTransform(long handle)
     {
         if (!_transforms.TryGetValue(handle, out var t))
             throw new ArgumentException($"Invalid transform handle: {handle}");
         return t;
     }
-
+    
+    // =======================================================================
+    // NUMERICS
+    // =======================================================================
+    
+    /// <summary>
+    /// Extracts a float from a Scheme numeric argument.  IronScheme's flonum
+    /// literals (e.g. 1.0) are boxed as System.Double, not System.Single, so
+    /// any GameMath function taking a raw scalar from a .gc file must accept
+    /// both.  Returns null for anything else.
+    /// </summary>
+    private static float? AsFloat(object? o) => o switch
+    {
+        float  f => f,
+        double d => (float)d,
+        long   l => l,
+        int    i => i,
+        _        => null
+    };
+    
+    /// <summary>
+    /// Extracts an exact integer from a Scheme argument.  Only int/long -
+    /// deliberately does NOT accept float/double, so passing a flonum where
+    /// an exact integer is required still correctly returns #f.
+    /// </summary>
+    private static int? AsInt(object? o) => o switch
+    {
+        int  i => i,
+        long l => (int)l,
+        _      => null
+    };
+    
     // =======================================================================
     // VECTOR 3
     // =======================================================================
-
+    
     /// <summary>
     /// Constructs a Vector3.
     /// Scheme: <c>(vec3 x y z)</c>
     /// </summary>
     public static object Vec3(object[] args)
     {
-        var x = args.Length > 0 ? args[0] : null;
-        var y = args.Length > 1 ? args[1] : null;
-        var z = args.Length > 2 ? args[2] : null;
-
-        if (x is float && y is float && z is float)
-        {
-            return new Vector3((float)x, (float)y, (float)z);
-        }
-
+        float? x = args.Length > 0 ? AsFloat(args[0]) : null;
+        float? y = args.Length > 1 ? AsFloat(args[1]) : null;
+        float? z = args.Length > 2 ? AsFloat(args[2]) : null;
+        
+        if (x is float xf && y is float yf && z is float zf)
+            return new Vector3(xf, yf, zf);
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Component-wise addition.
         /// Scheme: <c>(vector+ a b)</c>
@@ -95,15 +124,15 @@ public static class GameMath
     {
         var a = args.Length > 0 ? args[0] : null;
         var b = args.Length > 1 ? args[1] : null;
-
+        
         if (a is Vector3 && b is Vector3)
         {
             return Vector3.Add((Vector3)a, (Vector3)b);
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Component-wise subtraction.
     /// Scheme: <c>(vector- a b)</c>
@@ -112,15 +141,15 @@ public static class GameMath
     {
         var a = args.Length > 0 ? args[0] : null;
         var b = args.Length > 1 ? args[1] : null;
-
+        
         if (a is Vector3 && b is Vector3)
         {
             return Vector3.Subtract((Vector3)a, (Vector3)b);
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Scalar multiplication.
     /// Scheme: <c>(vector-scale v s)</c>
@@ -128,16 +157,14 @@ public static class GameMath
     public static object Vector3Scale(object[] args)
     {
         var v = args.Length > 0 ? args[0] : null;
-        var s = args.Length > 1 ? args[1] : null;
-
-        if (v is Vector3 && s is float)
-        {
-            return Vector3.Multiply((Vector3)v, (float)s);
-        }
-
+        float? s = args.Length > 1 ? AsFloat(args[1]) : null;
+        
+        if (v is Vector3 vv && s is float sf)
+            return Vector3.Multiply(vv, sf);
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Dot product of two Vector3s.
     /// Scheme: <c>(vector-dot a b)</c>
@@ -146,15 +173,15 @@ public static class GameMath
     {
         var a = args.Length > 0 ? args[0] : null;
         var b = args.Length > 1 ? args[1] : null;
-
+        
         if (a is Vector3 && b is Vector3)
         {
             return Vector3.Dot((Vector3)a, (Vector3)b);
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Cross product. Result is perpendicular to both inputs.
     /// Scheme: <c>(vector-cross a b)</c>
@@ -163,15 +190,15 @@ public static class GameMath
     {
         var a = args.Length > 0 ? args[0] : null;
         var b = args.Length > 1 ? args[1] : null;
-
+        
         if (a is Vector3 && b is Vector3)
         {
             return Vector3.Cross((Vector3)a, (Vector3)b);
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Euclidean length (magnitude).
     /// Scheme: <c>(vector-length v)</c>
@@ -179,15 +206,15 @@ public static class GameMath
     public static object Vector3Length(object[] args)
     {
         var v = args.Length > 0 ? args[0] : null;
-
+        
         if (v is Vector3)
         {
             return ((Vector3)v).Length();
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Returns a unit-length copy of v. Returns Vector3.Zero when the input
     /// magnitude is below float epsilon, matching GOAL's safe-normalize behavior.
@@ -196,7 +223,7 @@ public static class GameMath
     public static object Vector3Normalize(object[] args)
     {
         var v = args.Length > 0 ? args[0] : null;
-
+        
         if (v is Vector3)
         {
             float len = ((Vector3)v).Length();
@@ -206,10 +233,10 @@ public static class GameMath
             }
             return (Vector3)v / len;
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Euclidean distance between two points.
     /// Scheme: <c>(vector-distance a b)</c>
@@ -218,15 +245,15 @@ public static class GameMath
     {
         var a = args.Length > 0 ? args[0] : null;
         var b = args.Length > 1 ? args[1] : null;
-
+        
         if (a is Vector3 && b is Vector3)
         {
             return Vector3.Distance((Vector3)a, (Vector3)b);
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Linear interpolation between two Vector3s at parameter t in [0, 1].
     /// Scheme: <c>(vector-lerp a b t)</c>
@@ -235,20 +262,18 @@ public static class GameMath
     {
         var a = args.Length > 0 ? args[0] : null;
         var b = args.Length > 1 ? args[1] : null;
-        var t = args.Length > 2 ? args[2] : null;
-
-        if (a is Vector3 && b is Vector3 && t is float)
-        {
-            return Vector3.Lerp((Vector3)a, (Vector3)b, (float)t);
-        }
-
+        float? t = args.Length > 2 ? AsFloat(args[2]) : null;
+        
+        if (a is Vector3 va && b is Vector3 vb && t is float tf)
+            return Vector3.Lerp(va, vb, tf);
+        
         return "#f".Eval();
     }
-
+    
     // =======================================================================
     // VECTOR 4
     // =======================================================================
-
+    
     /// <summary>
     /// Constructs a Vector4. GOAL's native <c>vector</c> type includes a w
     /// component; spatial positions use units where value / 4096 == meters.
@@ -256,23 +281,21 @@ public static class GameMath
     /// </summary>
     public static object Vec4(object[] args)
     {
-        var x = args.Length > 0 ? args[0] : null;
-        var y = args.Length > 1 ? args[1] : null;
-        var z = args.Length > 2 ? args[2] : null;
-        var w = args.Length > 3 ? args[3] : null;
-
-        if (x is float && y is float && z is float && w is float)
-        {
-            return new Vector4((float)x, (float)y, (float)z, (float)w);
-        }
-
+        float? x = args.Length > 0 ? AsFloat(args[0]) : null;
+        float? y = args.Length > 1 ? AsFloat(args[1]) : null;
+        float? z = args.Length > 2 ? AsFloat(args[2]) : null;
+        float? w = args.Length > 3 ? AsFloat(args[3]) : null;
+        
+        if (x is float xf && y is float yf && z is float zf && w is float wf)
+            return new Vector4(xf, yf, zf, wf);
+        
         return "#f".Eval();
     }
-
+    
     // =======================================================================
     // QUATERNION
     // =======================================================================
-
+    
     /// <summary>
     /// Returns the identity quaternion (no rotation).
     /// Scheme: <c>(quat-identity)</c>
@@ -281,7 +304,7 @@ public static class GameMath
     {
         return Quaternion.Identity;
     }
-
+    
     /// <summary>
     /// Constructs a quaternion from an axis vector and a rotation angle in
     /// degrees.  The axis does not need to be pre-normalised.
@@ -290,16 +313,14 @@ public static class GameMath
     public static object QuatFromAxisAngle(object[] args)
     {
         var axis     = args.Length > 0 ? args[0] : null;
-        var angleDeg = args.Length > 1 ? args[1] : null;
-
-        if (axis is Vector3 && angleDeg is float)
-        {
-            return Quaternion.CreateFromAxisAngle(Vector3.Normalize((Vector3)axis), (float)angleDeg * Deg2RadF);
-        }
-
+        float? angleDeg = args.Length > 1 ? AsFloat(args[1]) : null;
+        
+        if (axis is Vector3 a && angleDeg is float deg)
+            return Quaternion.CreateFromAxisAngle(Vector3.Normalize(a), deg * Deg2RadF);
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Constructs a quaternion from Euler angles in degrees (pitch, yaw, roll
     /// applied in that order — matches GOAL's convention).
@@ -307,21 +328,18 @@ public static class GameMath
     /// </summary>
     public static object QuatFromEuler(object[] args)
     {
-        var pitchDeg = args.Length > 0 ? args[0] : null;
-        var yawDeg   = args.Length > 1 ? args[1] : null;
-        var rollDeg  = args.Length > 2 ? args[2] : null;
-
-        if (pitchDeg is float && yawDeg is float && rollDeg is float)
+        float? pitchDeg = args.Length > 0 ? AsFloat(args[0]) : null;
+        float? yawDeg   = args.Length > 1 ? AsFloat(args[1]) : null;
+        float? rollDeg  = args.Length > 2 ? AsFloat(args[2]) : null;
+        
+        if (pitchDeg is float p && yawDeg is float y && rollDeg is float r)
         {
-            return Quaternion.CreateFromYawPitchRoll(
-                (float)yawDeg   * Deg2RadF,
-                (float)pitchDeg * Deg2RadF,
-                (float)rollDeg  * Deg2RadF);
+            return Quaternion.CreateFromYawPitchRoll(y * Deg2RadF, p * Deg2RadF, r * Deg2RadF);
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Hamilton product: applies rotation b then a (right-to-left composition).
     /// Scheme: <c>(quat* a b)</c>
@@ -330,15 +348,15 @@ public static class GameMath
     {
         var a = args.Length > 0 ? args[0] : null;
         var b = args.Length > 1 ? args[1] : null;
-
+        
         if (a is Quaternion && b is Quaternion)
         {
             return Quaternion.Multiply((Quaternion)a, (Quaternion)b);
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Spherical linear interpolation between two quaternions at t in [0, 1].
     /// Scheme: <c>(quat-slerp a b t)</c>
@@ -347,16 +365,14 @@ public static class GameMath
     {
         var a = args.Length > 0 ? args[0] : null;
         var b = args.Length > 1 ? args[1] : null;
-        var t = args.Length > 2 ? args[2] : null;
-
-        if (a is Quaternion && b is Quaternion && t is float)
-        {
-            return Quaternion.Slerp((Quaternion)a, (Quaternion)b, (float)t);
-        }
-
+        float? t = args.Length > 2 ? AsFloat(args[2]) : null;
+        
+        if (a is Quaternion qa && b is Quaternion qb && t is float tf)
+            return Quaternion.Slerp(qa, qb, tf);
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Decomposes a quaternion to Euler angles in degrees [pitch, yaw, roll].
     /// Intended for debugging and serialization; prefer quaternion arithmetic
@@ -386,13 +402,13 @@ public static class GameMath
             float sinyCosp = 2f * (quat.W * quat.Y + quat.Z * quat.X);
             float cosyCosp = 1f - 2f * (quat.Y * quat.Y + quat.X * quat.X);
             float yaw      = MathF.Atan2(sinyCosp, cosyCosp) * Rad2DegF;
-
+            
             return new Vector3(pitch, yaw, roll);
         }
         
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Rotates a Vector3 by a quaternion.
     /// Scheme: <c>(quat-rotate-vec3 q v)</c>
@@ -401,19 +417,19 @@ public static class GameMath
     {
         var q = args.Length > 0 ? args[0] : null;
         var v = args.Length > 1 ? args[1] : null;
-
+        
         if (q is Quaternion && v is Vector3)
         {
             return Vector3.Transform((Vector3)v, (Quaternion)q);
         }
-
+        
         return "#f".Eval();
     }
-
+    
     // =======================================================================
     // MATRIX 4x4
     // =======================================================================
-
+    
     /// <summary>
     /// Returns the 4x4 identity matrix.
     /// Scheme: <c>(matrix-identity)</c>
@@ -422,7 +438,7 @@ public static class GameMath
     {
         return Matrix4x4.Identity;
     }
-
+    
     /// <summary>
     /// Matrix multiplication: a x b.
     /// Scheme: <c>(matrix* a b)</c>
@@ -431,15 +447,15 @@ public static class GameMath
     {
         var a = args.Length > 0 ? args[0] : null;
         var b = args.Length > 1 ? args[1] : null;
-
+        
         if (a is Matrix4x4 && b is Matrix4x4)
         {
             return Matrix4x4.Multiply((Matrix4x4)a, (Matrix4x4)b);
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Matrix inverse.  Returns the identity matrix when the matrix is singular
     /// (determinant ~= 0) to handle potential errors in the script.
@@ -448,7 +464,7 @@ public static class GameMath
     public static object MatrixInverse(object[] args)
     {
         var m = args.Length > 0 ? args[0] : null;
-
+        
         if (m is Matrix4x4)
         {
             if (!Matrix4x4.Invert((Matrix4x4)m, out Matrix4x4 result))
@@ -458,10 +474,10 @@ public static class GameMath
             }
             return result;
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Builds a combined rotation and translation matrix from a quaternion and
     /// a translation vector.  No scale component; use TransformCreate for TRS.
@@ -471,17 +487,17 @@ public static class GameMath
     {
         var q           = args.Length > 0 ? args[0] : null;
         var translation = args.Length > 1 ? args[1] : null;
-
+        
         if (q is Quaternion && translation is Vector3)
         {
             Matrix4x4 m = Matrix4x4.CreateFromQuaternion((Quaternion)q);
             m.Translation = (Vector3)translation;
             return m;
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Transforms a point by a matrix (applies translation).  Use for positions.
     /// Scheme: <c>(matrix-transform-point m p)</c>
@@ -490,15 +506,15 @@ public static class GameMath
     {
         var m     = args.Length > 0 ? args[0] : null;
         var point = args.Length > 1 ? args[1] : null;
-
+        
         if (m is Matrix4x4 && point is Vector3)
         {
             return Vector3.Transform((Vector3)point, (Matrix4x4)m);
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Transforms a direction vector by a matrix (ignores translation).  Use for
     /// normals and velocities where the origin does not matter.
@@ -508,15 +524,15 @@ public static class GameMath
     {
         var m   = args.Length > 0 ? args[0] : null;
         var dir = args.Length > 1 ? args[1] : null;
-
+        
         if (m is Matrix4x4 && dir is Vector3)
         {
             return Vector3.TransformNormal((Vector3)dir, (Matrix4x4)m);
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Constructs a view (look-at) matrix.
     /// Scheme: <c>(matrix-look-at eye target up)</c>
@@ -526,38 +542,36 @@ public static class GameMath
         var eye    = args.Length > 0 ? args[0] : null;
         var target = args.Length > 1 ? args[1] : null;
         var up     = args.Length > 2 ? args[2] : null;
-
+        
         if (eye is Vector3 && target is Vector3 && up is Vector3)
         {
             return Matrix4x4.CreateLookAt((Vector3)eye, (Vector3)target, (Vector3)up);
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Constructs a right-handed perspective projection matrix.
     /// Scheme: <c>(matrix-perspective fov aspect near far)</c>
     /// </summary>
     public static object MatrixPerspective(object[] args)
     {
-        var fovDeg = args.Length > 0 ? args[0] : null;
-        var aspect = args.Length > 1 ? args[1] : null;
-        var near   = args.Length > 2 ? args[2] : null;
-        var far    = args.Length > 3 ? args[3] : null;
-
-        if (fovDeg is float && aspect is float && near is float && far is float)
-        {
-            return Matrix4x4.CreatePerspectiveFieldOfView((float)fovDeg * Deg2RadF, (float)aspect, (float)near, (float)far);
-        }
-
+        float? fovDeg = args.Length > 0 ? AsFloat(args[0]) : null;
+        float? aspect = args.Length > 1 ? AsFloat(args[1]) : null;
+        float? near   = args.Length > 2 ? AsFloat(args[2]) : null;
+        float? far    = args.Length > 3 ? AsFloat(args[3]) : null;
+        
+        if (fovDeg is float fov && aspect is float asp && near is float n && far is float f)
+            return Matrix4x4.CreatePerspectiveFieldOfView(fov * Deg2RadF, asp, n, f);
+        
         return "#f".Eval();
     }
-
+    
     // =======================================================================
     // TRANSFORM  (position + rotation + scale, stored as opaque handles)
     // =======================================================================
-
+    
     /// <summary>
     /// Allocates a new transform in the engine pool and returns an opaque
     /// handle.  The handle is valid for the lifetime of the runtime.
@@ -568,17 +582,17 @@ public static class GameMath
         var pos   = args.Length > 0 ? args[0] : null;
         var rot   = args.Length > 1 ? args[1] : null;
         var scale = args.Length > 2 ? args[2] : null;
-
+        
         if (pos is Vector3 && rot is Quaternion && scale is Vector3)
         {
             long handle = Interlocked.Increment(ref _nextHandle);
             _transforms[handle] = new TransformData((Vector3)pos, (Quaternion)rot, (Vector3)scale);
             return handle;
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Returns the world position of a transform.
     /// Scheme: <c>(transform-get-pos handle)</c>
@@ -586,15 +600,15 @@ public static class GameMath
     public static object TransformGetPosition(object[] args)
     {
         var handle = args.Length > 0 ? args[0] : null;
-
+        
         if (handle is long)
         {
             return GetTransform((long)handle).Position;
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Updates the world position of a transform in-place.
     /// Scheme: <c>(transform-set-pos! handle pos)</c>
@@ -603,17 +617,17 @@ public static class GameMath
     {
         var handle = args.Length > 0 ? args[0] : null;
         var pos    = args.Length > 1 ? args[1] : null;
-
+        
         if (handle is long && pos is Vector3)
         {
             TransformData t = GetTransform((long)handle);
             _transforms[(long)handle] = t with { Position = (Vector3)pos };
             return "#t".Eval();
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Returns the rotation quaternion of a transform.
     /// Scheme: <c>(transform-get-rot handle)</c>
@@ -621,15 +635,15 @@ public static class GameMath
     public static object TransformGetRotation(object[] args)
     {
         var handle = args.Length > 0 ? args[0] : null;
-
+        
         if (handle is long)
         {
             return GetTransform((long)handle).Rotation;
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Updates the rotation quaternion of a transform in-place.
     /// Scheme: <c>(transform-set-rot! handle rot)</c>
@@ -638,17 +652,17 @@ public static class GameMath
     {
         var handle = args.Length > 0 ? args[0] : null;
         var rot    = args.Length > 1 ? args[1] : null;
-
+        
         if (handle is long && rot is Quaternion)
         {
             TransformData t = GetTransform((long)handle);
             _transforms[(long)handle] = t with { Rotation = (Quaternion)rot };
             return "#t".Eval();
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Returns the local forward vector (+Z in GOAL space) of a transform,
     /// derived from its rotation quaternion.
@@ -669,7 +683,7 @@ public static class GameMath
         
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Releases a transform handle and frees its pool entry.
     /// Scheme: <c>(transform-destroy! handle)</c>
@@ -677,20 +691,20 @@ public static class GameMath
     public static object TransformDestroy(object[] args)
     {
         var handle = args.Length > 0 ? args[0] : null;
-
+        
         if (handle is long)
         {
             _transforms.TryRemove((long)handle, out _);
             return "#t".Eval();
         }
-
+        
         return "#f".Eval();
     }
-
+    
     // =======================================================================
     // GEOMETRY HELPERS
     // =======================================================================
-
+    
     /// <summary>
     /// Constructs an axis-aligned bounding box from its minimum and maximum
     /// corner points.
@@ -700,15 +714,15 @@ public static class GameMath
     {
         var min = args.Length > 0 ? args[0] : null;
         var max = args.Length > 1 ? args[1] : null;
-
+        
         if (min is Vector3 && max is Vector3)
         {
             return ((Vector3)min, (Vector3)max);
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Returns true if the given point lies inside or on the surface of the
     /// bounding box.
@@ -718,7 +732,7 @@ public static class GameMath
     {
         var bbox  = args.Length > 0 ? args[0] : null;
         var point = args.Length > 1 ? args[1] : null;
-
+        
         if (bbox is ValueTuple<Vector3, Vector3> && point is Vector3)
         {
             var (min, max) = (ValueTuple<Vector3, Vector3>)bbox;
@@ -727,10 +741,10 @@ public static class GameMath
                 && pt.Y >= min.Y && pt.Y <= max.Y
                 && pt.Z >= min.Z && pt.Z <= max.Z;
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Returns true if two bounding boxes overlap.  Touching surfaces count as
     /// intersection, consistent with GOAL's collision queries.
@@ -740,7 +754,7 @@ public static class GameMath
     {
         var a = args.Length > 0 ? args[0] : null;
         var b = args.Length > 1 ? args[1] : null;
-
+        
         if (a is ValueTuple<Vector3, Vector3> && b is ValueTuple<Vector3, Vector3>)
         {
             var (aMin, aMax) = (ValueTuple<Vector3, Vector3>)a;
@@ -749,10 +763,10 @@ public static class GameMath
                 && aMin.Y <= bMax.Y && aMax.Y >= bMin.Y
                 && aMin.Z <= bMax.Z && aMax.Z >= bMin.Z;
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Returns the center point of a bounding box.
     /// Scheme: <c>(bbox-center bbox)</c>
@@ -760,56 +774,52 @@ public static class GameMath
     public static object BBoxCenter(object[] args)
     {
         var bbox = args.Length > 0 ? args[0] : null;
-
+        
         if (bbox is ValueTuple<Vector3, Vector3>)
         {
             var (min, max) = (ValueTuple<Vector3, Vector3>)bbox;
             return (min + max) * 0.5f;
         }
-
+        
         return "#f".Eval();
     }
-
+    
     // =====================================================================
     // INTERPOLATION AND EASING
     // =====================================================================
-
+    
     /// <summary>
     /// Linear interpolation between two scalars.
     /// Scheme: <c>(lerp a b t)</c>
     /// </summary>
     public static object Lerp(object[] args)
     {
-        var a = args.Length > 0 ? args[0] : null;
-        var b = args.Length > 1 ? args[1] : null;
-        var t = args.Length > 2 ? args[2] : null;
-
-        if (a is float && b is float && t is float)
-        {
-            return (float)a + ((float)b - (float)a) * (float)t;
-        }
-
+        float? a = args.Length > 0 ? AsFloat(args[0]) : null;
+        float? b = args.Length > 1 ? AsFloat(args[1]) : null;
+        float? t = args.Length > 2 ? AsFloat(args[2]) : null;
+        
+        if (a is float af && b is float bf && t is float tf)
+            return af + (bf - af) * tf;
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Clamps a value to the inclusive range [min, max].
     /// Scheme: <c>(clamp val min max)</c>
     /// </summary>
     public static object Clamp(object[] args)
     {
-        var val = args.Length > 0 ? args[0] : null;
-        var min = args.Length > 1 ? args[1] : null;
-        var max = args.Length > 2 ? args[2] : null;
-
-        if (val is float && min is float && max is float)
-        {
-            return MathF.Min(MathF.Max((float)val, (float)min), (float)max);
-        }
-
+        float? val = args.Length > 0 ? AsFloat(args[0]) : null;
+        float? min = args.Length > 1 ? AsFloat(args[1]) : null;
+        float? max = args.Length > 2 ? AsFloat(args[2]) : null;
+        
+        if (val is float v && min is float lo && max is float hi)
+            return MathF.Min(MathF.Max(v, lo), hi);
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Hermite interpolation that eases in and out.  Returns 0 when val is at
     /// or below edge0, 1 when val is at or above edge1, and a smooth cubic
@@ -818,19 +828,19 @@ public static class GameMath
     /// </summary>
     public static object SmoothStep(object[] args)
     {
-        var edge0 = args.Length > 0 ? args[0] : null;
-        var edge1 = args.Length > 1 ? args[1] : null;
-        var val   = args.Length > 2 ? args[2] : null;
-
-        if (edge0 is float && edge1 is float && val is float)
+        float? edge0 = args.Length > 0 ? AsFloat(args[0]) : null;
+        float? edge1 = args.Length > 1 ? AsFloat(args[1]) : null;
+        float? val   = args.Length > 2 ? AsFloat(args[2]) : null;
+        
+        if (edge0 is float e0 && edge1 is float e1 && val is float v)
         {
-            float t = MathF.Min(MathF.Max(((float)val - (float)edge0) / ((float)edge1 - (float)edge0), 0f), 1f);
+            float t = MathF.Min(MathF.Max((v - e0) / (e1 - e0), 0f), 1f);
             return t * t * (3f - 2f * t);
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Smoother variant of SmoothStep (Ken Perlin's improved version).  Has zero
     /// first and second derivatives at both edges; better for noise functions.
@@ -838,51 +848,47 @@ public static class GameMath
     /// </summary>
     public static object SmootherStep(object[] args)
     {
-        var edge0 = args.Length > 0 ? args[0] : null;
-        var edge1 = args.Length > 1 ? args[1] : null;
-        var val   = args.Length > 2 ? args[2] : null;
-
-        if (edge0 is float && edge1 is float && val is float)
+        float? edge0 = args.Length > 0 ? AsFloat(args[0]) : null;
+        float? edge1 = args.Length > 1 ? AsFloat(args[1]) : null;
+        float? val   = args.Length > 2 ? AsFloat(args[2]) : null;
+        
+        if (edge0 is float e0 && edge1 is float e1 && val is float v)
         {
-            float t = MathF.Min(MathF.Max(((float)val - (float)edge0) / ((float)edge1 - (float)edge0), 0f), 1f);
+            float t = MathF.Min(MathF.Max((v - e0) / (e1 - e0), 0f), 1f);
             return t * t * t * (t * (t * 6f - 15f) + 10f);
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Converts degrees to radians.
     /// Scheme: <c>(deg->rad deg)</c>
     /// </summary>
     public static object DegToRad(object[] args)
     {
-        var deg = args.Length > 0 ? args[0] : null;
-
-        if (deg is float)
-        {
-            return (float)deg * Deg2RadF;
-        }
-
+        float? deg = args.Length > 0 ? AsFloat(args[0]) : null;
+        
+        if (deg is float d)
+            return d * Deg2RadF;
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Converts radians to degrees.
     /// Scheme: <c>(rad->deg rad)</c>
     /// </summary>
     public static object RadToDeg(object[] args)
     {
-        var rad = args.Length > 0 ? args[0] : null;
-
-        if (rad is float)
-        {
-            return (float)rad * Rad2DegF;
-        }
-
+        float? rad = args.Length > 0 ? AsFloat(args[0]) : null;
+        
+        if (rad is float r)
+            return r * Rad2DegF;
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Wraps an angle in degrees to the range (-180, 180].  Useful for
     /// shortest-path rotation arithmetic.
@@ -890,17 +896,17 @@ public static class GameMath
     /// </summary>
     public static object WrapAngle180(object[] args)
     {
-        var deg = args.Length > 0 ? args[0] : null;
-
-        if (deg is float)
+        float? deg = args.Length > 0 ? AsFloat(args[0]) : null;
+        
+        if (deg is float d)
         {
-            float d = ((float)deg % 360f + 360f) % 360f;
-            return d > 180f ? d - 360f : d;
+            float wrapped = (d % 360f + 360f) % 360f;
+            return wrapped > 180f ? wrapped - 360f : wrapped;
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Shortest angular distance from angle a to angle b in degrees.  Returns
     /// a signed value in the range (-180, 180].
@@ -908,76 +914,69 @@ public static class GameMath
     /// </summary>
     public static object AngleDelta(object[] args)
     {
-        var a = args.Length > 0 ? args[0] : null;
-        var b = args.Length > 1 ? args[1] : null;
-
-        if (a is float && b is float)
+        float? a = args.Length > 0 ? AsFloat(args[0]) : null;
+        float? b = args.Length > 1 ? AsFloat(args[1]) : null;
+        
+        if (a is float af && b is float bf)
         {
-            float diff = ((float)b - (float)a) % 360f + 360f;
-            diff %= 360f;
+            float diff = ((bf - af) % 360f + 360f) % 360f;
             return diff > 180f ? diff - 360f : diff;
         }
-
+        
         return "#f".Eval();
     }
-
+    
     // =====================================================================
     // UNIT CONVERSION  (GOAL fixed-point <-> meters)
     // =====================================================================
-
+    
     /// <summary>
     /// Converts a value in GOAL units to meters.  4096 units == 1 meter.
     /// Scheme: <c>(units->meters u)</c>
     /// </summary>
     public static object UnitsToMeters(object[] args)
     {
-        var units = args.Length > 0 ? args[0] : null;
-
-        if (units is float)
-        {
-            return (float)units / UnitsPerMeter;
-        }
-
+        float? units = args.Length > 0 ? AsFloat(args[0]) : null;
+        
+        if (units is float u)
+            return u / UnitsPerMeter;
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Converts a value in meters to GOAL units.
     /// Scheme: <c>(meters->units m)</c>
     /// </summary>
     public static object MetersToUnits(object[] args)
     {
-        var meters = args.Length > 0 ? args[0] : null;
-
-        if (meters is float)
-        {
-            return (float)meters * UnitsPerMeter;
-        }
-
+        float? meters = args.Length > 0 ? AsFloat(args[0]) : null;
+        
+        if (meters is float m)
+            return m * UnitsPerMeter;
+        
         return "#f".Eval();
     }
-
+    
     // =====================================================================
     // RANDOM
     // =====================================================================
-
+    
     /// <summary>
     /// Returns a uniformly distributed random float in [min, max).
     /// Scheme: <c>(random-float min max)</c>
     /// </summary>
     public static object RandomFloat(object[] args)
     {
-        var min = args.Length > 0 ? args[0] : null;
-        var max = args.Length > 1 ? args[1] : null;
-
-        if (min is float && max is float)
-        {
-            return (float)min + (float)Rng.NextDouble() * ((float)max - (float)min);
-        }
-
+        float? min = args.Length > 0 ? AsFloat(args[0]) : null;
+        float? max = args.Length > 1 ? AsFloat(args[1]) : null;
+        
+        if (min is float lo && max is float hi)
+            return lo + (float)Rng.NextDouble() * (hi - lo);
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Returns a uniformly distributed random integer in [min, max].
     /// Scheme: <c>(random-int min max)</c>
@@ -986,15 +985,15 @@ public static class GameMath
     {
         var min = args.Length > 0 ? args[0] : null;
         var max = args.Length > 1 ? args[1] : null;
-
+        
         if (min is int && max is int)
         {
             return Rng.Next((int)min, (int)max + 1);
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Returns a uniformly distributed random point inside a sphere of the
     /// given radius using rejection sampling.  Expected iterations per call ~= 1.91.
@@ -1003,7 +1002,7 @@ public static class GameMath
     public static object RandomPointInSphere(object[] args)
     {
         var radius = args.Length > 0 ? args[0] : null;
-
+        
         if (radius is float)
         {
             float r = (float)radius;
@@ -1018,10 +1017,10 @@ public static class GameMath
                 }
             }
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Returns a uniformly distributed random point on the surface of a sphere
     /// of the given radius (Marsaglia method — avoids trig calls).
@@ -1030,7 +1029,7 @@ public static class GameMath
     public static object RandomOnSphere(object[] args)
     {
         var radius = args.Length > 0 ? args[0] : null;
-
+        
         if (radius is float)
         {
             float r = (float)radius;
@@ -1050,46 +1049,42 @@ public static class GameMath
                     (1f - 2f * s) * r);
             }
         }
-
+        
         return "#f".Eval();
     }
-
+    
     // =======================================================================
     // SCALAR UTILITIES
     // =======================================================================
-
+    
     /// <summary>
     /// Absolute value of a float.  Equivalent to GOAL's <c>fabs</c> macro.
     /// Scheme: <c>(fabs x)</c>
     /// </summary>
     public static object Fabs(object[] args)
     {
-        var x = args.Length > 0 ? args[0] : null;
-
-        if (x is float)
-        {
-            return MathF.Abs((float)x);
-        }
-
+        float? x = args.Length > 0 ? AsFloat(args[0]) : null;
+        
+        if (x is float xf)
+            return MathF.Abs(xf);
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Square root with absolute value guard.  Equivalent to GOAL's <c>sqrtf</c>.
     /// Scheme: <c>(sqrtf x)</c>
     /// </summary>
     public static object Sqrtf(object[] args)
     {
-        var x = args.Length > 0 ? args[0] : null;
-
-        if (x is float)
-        {
-            return MathF.Sqrt(MathF.Abs((float)x));
-        }
-
+        float? x = args.Length > 0 ? AsFloat(args[0]) : null;
+        
+        if (x is float xf)
+            return MathF.Sqrt(MathF.Abs(xf));
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Returns true when the absolute difference between a and b is less than
     /// epsilon.  Matches GOAL's <c>fequal-epsilon?</c>.
@@ -1097,18 +1092,16 @@ public static class GameMath
     /// </summary>
     public static object FEqualEpsilon(object[] args)
     {
-        var a       = args.Length > 0 ? args[0] : null;
-        var b       = args.Length > 1 ? args[1] : null;
-        var epsilon = args.Length > 2 ? args[2] : null;
-
-        if (a is float && b is float && epsilon is float)
-        {
-            return MathF.Abs((float)a - (float)b) < (float)epsilon;
-        }
-
+        float? a       = args.Length > 0 ? AsFloat(args[0]) : null;
+        float? b       = args.Length > 1 ? AsFloat(args[1]) : null;
+        float? epsilon = args.Length > 2 ? AsFloat(args[2]) : null;
+        
+        if (a is float af && b is float bf && epsilon is float ef)
+            return MathF.Abs(af - bf) < ef;
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Integer sign-safe division matching the EE's DIV instruction.  Returns
     /// -1 when the divisor is zero, and int.MinValue for the MIN_INT / -1
@@ -1117,51 +1110,35 @@ public static class GameMath
     /// </summary>
     public static object SignedDiv0Guard(object[] args)
     {
-        var dividend = args.Length > 0 ? args[0] : null;
-        var divisor  = args.Length > 1 ? args[1] : null;
-
-        if (dividend is int && divisor is int)
+        int? dividend = args.Length > 0 ? AsInt(args[0]) : null;
+        int? divisor  = args.Length > 1 ? AsInt(args[1]) : null;
+        
+        if (dividend is int n && divisor is int d)
         {
-            int d = (int)divisor;
-            int n = (int)dividend;
-            if (d == 0)
-            {
-                return n < 0 ? 1 : -1;
-            }
-            if (n == int.MinValue && d == -1)
-            {
-                return int.MinValue;
-            }
+            if (d == 0) return n < 0 ? 1 : -1;
+            if (n == int.MinValue && d == -1) return int.MinValue;
             return n / d;
         }
-
+        
         return "#f".Eval();
     }
-
+    
     /// <summary>
     /// Integer modulo matching the EE's DIV instruction edge cases.
     /// Scheme: <c>(mod-signed-0-guard a b)</c>
     /// </summary>
     public static object SignedMod0Guard(object[] args)
     {
-        var dividend = args.Length > 0 ? args[0] : null;
-        var divisor  = args.Length > 1 ? args[1] : null;
-
-        if (dividend is int && divisor is int)
+        int? dividend = args.Length > 0 ? AsInt(args[0]) : null;
+        int? divisor  = args.Length > 1 ? AsInt(args[1]) : null;
+        
+        if (dividend is int n && divisor is int d)
         {
-            int d = (int)divisor;
-            int n = (int)dividend;
-            if (d == 0)
-            {
-                return n;
-            }
-            if (n == int.MinValue && d == -1)
-            {
-                return 0;
-            }
+            if (d == 0) return n;
+            if (n == int.MinValue && d == -1) return 0;
             return n % d;
         }
-
+        
         return "#f".Eval();
     }
 }

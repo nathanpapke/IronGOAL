@@ -60,6 +60,7 @@ public class Kernel
         ProcessRuntime.Install(_scheduler);
         EntitySystem.Install(EventBus);
         AnimationSystem.Install(EventBus);
+        AudioSystem.Install(EventBus);
         RegisterAll();
         
         _log(GoalLogSeverity.Info, GoalErrorCode.None, "Kernel booted successfully.");
@@ -330,6 +331,11 @@ public class Kernel
         DefineFunction("anim-on-event", AnimationSystem.OnEvent);
         DefineFunction("set-ik-target!", AnimationSystem.SetIKTarget);
         DefineFunction("set-ik-weight!", AnimationSystem.SetIKWeight);
+        
+        // ===================================================================
+        // AUDIO SYSTEM
+        // ===================================================================
+        
         
     }
     
