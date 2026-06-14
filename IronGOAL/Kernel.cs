@@ -336,7 +336,20 @@ public class Kernel
         // AUDIO SYSTEM
         // ===================================================================
         
-        
+        DefineFunction("sound-play", AudioSystem.Play);
+        DefineFunction("sound-play-2d", AudioSystem.Play2D);
+        DefineFunction("sound-stop", AudioSystem.Stop);
+        DefineFunction("sound-stop-all", AudioSystem.StopAll);
+        DefineFunction("sound-set-volume!", AudioSystem.SetVolume);
+        DefineFunction("sound-set-pitch!", AudioSystem.SetPitch);
+        DefineFunction("sound-set-param!", AudioSystem.SetParam);
+        DefineFunction("music-play", AudioSystem.MusicPlay);
+        DefineFunction("music-stop", AudioSystem.MusicStop);
+        DefineFunction("music-set-intensity!", AudioSystem.MusicSetIntensity);
+        DefineFunction("set-listener-pos!", AudioSystem.SetListenerPos);
+        DefineFunction("set-reverb!", AudioSystem.SetReverb);
+        DefineFunction("dialog-play", AudioSystem.DialogPlay);
+        DefineFunction("dialog-playing?", AudioSystem.IsDialogPlaying);
     }
     
     // =======================================================================

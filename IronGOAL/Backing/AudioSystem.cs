@@ -428,7 +428,7 @@ public static class AudioSystem
     /// <para>Scheme: <c>(dialog-playing? handle)</c></para>
     /// <para>Args: <c>handle:long</c></para>
     /// </summary>
-    public static object DialogIsPlaying(object[] args)
+    public static object IsDialogPlaying(object[] args)
     {
         if (args.Length == 0 || args[0] is not long handle)
             return "#f".Eval();
