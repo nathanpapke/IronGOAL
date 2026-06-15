@@ -61,6 +61,7 @@ public class Kernel
         EntitySystem.Install(EventBus);
         AnimationSystem.Install(EventBus);
         AudioSystem.Install(EventBus);
+        InputSystem.Install(EventBus);
         RegisterAll();
         
         _log(GoalLogSeverity.Info, GoalErrorCode.None, "Kernel booted successfully.");
@@ -350,6 +351,23 @@ public class Kernel
         DefineFunction("set-reverb!", AudioSystem.SetReverb);
         DefineFunction("dialog-play", AudioSystem.DialogPlay);
         DefineFunction("dialog-playing?", AudioSystem.IsDialogPlaying);
+        
+        // ===================================================================
+        // INPUT SYSTEM
+        // ===================================================================
+        
+        DefineFunction("input-pressed?", InputSystem.Pressed);
+        DefineFunction("input-released?", InputSystem.Released);
+        DefineFunction("input-held?", InputSystem.Held);
+        DefineFunction("input-analog", InputSystem.Analog);
+        DefineFunction("input-left-stick", InputSystem.LeftStick);
+        DefineFunction("input-right-stick", InputSystem.RightStick);
+        DefineFunction("input-left-trigger", InputSystem.LeftTrigger);
+        DefineFunction("input-right-trigger", InputSystem.RightTrigger);
+        DefineFunction("input-mouse-pos", InputSystem.MousePosition);
+        DefineFunction("input-mouse-delta", InputSystem.MouseDelta);
+        DefineFunction("input-mouse-button?", InputSystem.MouseButton);
+        DefineFunction("input-set-vibration!", InputSystem.SetVibration);
     }
     
     // =======================================================================
