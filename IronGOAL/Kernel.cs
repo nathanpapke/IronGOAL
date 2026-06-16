@@ -62,6 +62,7 @@ public class Kernel
         AnimationSystem.Install(EventBus);
         AudioSystem.Install(EventBus);
         InputSystem.Install(EventBus);
+        GraphicsSystem.Install(EventBus);
         RegisterAll();
         
         _log(GoalLogSeverity.Info, GoalErrorCode.None, "Kernel booted successfully.");
@@ -368,6 +369,33 @@ public class Kernel
         DefineFunction("input-mouse-delta", InputSystem.MouseDelta);
         DefineFunction("input-mouse-button?", InputSystem.MouseButton);
         DefineFunction("input-set-vibration!", InputSystem.SetVibration);
+        
+        // ===================================================================
+        // GRAPHICS SYSTEM
+        // ===================================================================
+        
+        DefineFunction("camera-set-pos!", GraphicsSystem.CameraSetPosition);
+        DefineFunction("camera-set-rot!", GraphicsSystem.CameraSetRotation);
+        DefineFunction("camera-set-fov!", GraphicsSystem.CameraSetFOV);
+        DefineFunction("camera-look-at!", GraphicsSystem.CameraLookAt);
+        DefineFunction("camera-get-pos", GraphicsSystem.CameraGetPosition);
+        DefineFunction("camera-get-forward", GraphicsSystem.CameraGetForward);
+        DefineFunction("world->screen", GraphicsSystem.WorldToScreen);
+        DefineFunction("screen->world-ray", GraphicsSystem.ScreenToWorldRay);
+        DefineFunction("fx-spawn", GraphicsSystem.FxSpawn);
+        DefineFunction("fx-spawn-attached", GraphicsSystem.FxSpawnAttached);
+        DefineFunction("fx-stop", GraphicsSystem.FxStop);
+        DefineFunction("fx-set-param!", GraphicsSystem.FxSetParam);
+        DefineFunction("set-bloom!", GraphicsSystem.SetBloom);
+        DefineFunction("set-color-grade!", GraphicsSystem.SetColorGrade);
+        DefineFunction("set-motion-blur!", GraphicsSystem.SetMotionBlur);
+        DefineFunction("screen-fade!", GraphicsSystem.ScreenFade);
+        DefineFunction("screen-shake!", GraphicsSystem.ScreenShake);
+        DefineFunction("set-level-visible!", GraphicsSystem.SetLevelVisible);
+        DefineFunction("set-entity-visible!", GraphicsSystem.SetEntityVisible);
+        DefineFunction("debug-draw-line", GraphicsSystem.DebugDrawLine);
+        DefineFunction("debug-draw-sphere", GraphicsSystem.DebugDrawSphere);
+        DefineFunction("debug-draw-text", GraphicsSystem.DebugDrawText);
     }
     
     // =======================================================================
