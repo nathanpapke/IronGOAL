@@ -14,8 +14,45 @@ public sealed class EventBus
     private readonly Channel<RenderCommand>              _renderChannel;
     private readonly Channel<AudioCommand>               _audioChannel;
     private readonly Channel<GameEvent>                  _gameEventChannel;
+    private readonly Channel<PhysicsCommand>             _physicsChannel;
     private readonly Channel<Timestamped<DebugCommand>>  _debugChannel;
     private readonly Channel<MemoryEvent>                _memoryChannel;
+    
+    // =======================================================================
+    // DROP COUNTERS
+    // =======================================================================
+    // Incremented (via Interlocked) whenever a Publish* call on a Wait-mode
+    // channel drops a command because no ScriptProcess context was present.
+    //
+    // Audio, GameEvent, and Debug channels use DropOldest/DropNewest and
+    // never reach this path — their drops are intentional by design and
+    // counted by the channel itself.
+    //
+    // The host reads these via the public properties below to surface
+    // backpressure diagnostics without polling the channels themselves.
+    // Counters are monotonically increasing and never reset.
+    
+    private static long _renderDropCount;
+    private static long _physicsDropCount;
+    private static long _memoryDropCount;
+    
+    /// <summary>
+    /// Total render commands dropped because the publish call had no
+    /// ScriptProcess context.  Monotonically increasing; never resets.
+    /// </summary>
+    public static long RenderDropCount  => Interlocked.Read(ref _renderDropCount);
+    
+    /// <summary>
+    /// Total memory events dropped because the publish call had no
+    /// ScriptProcess context.  Monotonically increasing; never resets.
+    /// </summary>
+    public static long MemoryDropCount  => Interlocked.Read(ref _memoryDropCount);
+    
+    /// <summary>
+    /// Total physics commands dropped because the publish call had no
+    /// ScriptProcess context.  Monotonically increasing; never resets.
+    /// </summary>
+    public static long PhysicsDropCount => Interlocked.Read(ref _physicsDropCount);
     
     // =======================================================================
     // CONSTRUCTION
@@ -28,12 +65,17 @@ public sealed class EventBus
         int renderCapacity    = 4096,
         int audioCapacity     = 1024,
         int gameEventCapacity = 512,
+        int physicsCapacity   = 512,
         int debugCapacity     = 256,
         int memoryCapacity    = 128)
     {
         // Render - Wait on full.
-        // The kernel must not drop draw calls; if the host render pass falls
-        // behind, backpressure propagates into Tick() via the Wait mode.
+        // The kernel must not drop draw calls.  When the channel is full,
+        // the calling ScriptProcess is suspended via process-suspend until
+        // space is available - no .NET thread is ever blocked.  A publish
+        // call with no process context (host-originated code) increments
+        // RenderDropCount and returns immediately; this is the only path
+        // on which render data is lost.
         // SingleReader = false because some engines drain the render channel
         // from a dedicated render thread separate from the main thread.
         _renderChannel = Channel.CreateBounded<RenderCommand>(
@@ -57,9 +99,9 @@ public sealed class EventBus
             });
         
         // GameEvent - DropNewest on full.
-        // Unlike audio, ordering and completeness of game events matters -
+        // Unlike audio, ordering and completeness of game events matter -
         // an EntitySpawn that arrives out of order with its EntityKill is
-        // worse than a missed spawn. DropNewest lets the existing queue
+        // worse than a missed spawn.  DropNewest lets the existing queue
         // drain in order rather than overwriting with newer events.
         _gameEventChannel = Channel.CreateBounded<GameEvent>(
             new BoundedChannelOptions(gameEventCapacity)
@@ -69,8 +111,24 @@ public sealed class EventBus
                 SingleReader = true,
             });
         
+        // Physics - Wait on full.
+        // Physics commands (ApplyForce, SetVelocity, etc.) must not be
+        // dropped - a missed command desyncs simulation state permanently.
+        // When the channel is full, the calling ScriptProcess is suspended
+        // until the host drains it - no .NET thread is ever blocked.
+        // A publish call with no process context increments PhysicsDropCount
+        // and returns immediately.
+        // SingleReader = true; physics is drained on the simulation thread.
+        _physicsChannel = Channel.CreateBounded<PhysicsCommand>(
+            new BoundedChannelOptions(physicsCapacity)
+            {
+                FullMode     = BoundedChannelFullMode.Wait,
+                SingleWriter = true,
+                SingleReader = true,
+            });
+        
         // Debug - DropOldest on full.
-        // Debug output is best-effort. The kernel must never stall waiting
+        // Debug output is best-effort.  The kernel must never stall waiting
         // for a log line to be consumed; stale messages are less useful than
         // recent ones, so dropping the oldest is correct.
         _debugChannel = Channel.CreateBounded<Timestamped<DebugCommand>>(
@@ -83,7 +141,7 @@ public sealed class EventBus
         
         // Memory - Wait on full.
         // Memory events must not be dropped; a missed kfree makes heap
-        // accounting drift. The 128 default capacity is generous relative
+        // accounting drift.  The 128 default capacity is generous relative
         // to how often scripts allocate - if this blocks in practice the
         // host profiler is not draining fast enough.
         _memoryChannel = Channel.CreateBounded<MemoryEvent>(
@@ -102,21 +160,37 @@ public sealed class EventBus
     public ChannelReader<RenderCommand>             RenderCommands => _renderChannel.Reader;
     public ChannelReader<AudioCommand>              AudioCommands  => _audioChannel.Reader;
     public ChannelReader<GameEvent>                 GameEvents     => _gameEventChannel.Reader;
+    public ChannelReader<PhysicsCommand>            PhysicsCommands => _physicsChannel.Reader;
     public ChannelReader<Timestamped<DebugCommand>> DebugCommands  => _debugChannel.Reader;
     public ChannelReader<MemoryEvent>               MemoryEvents   => _memoryChannel.Reader;
     
     // =======================================================================
     // INTERNAL WRITE SURFACE (called only by Kernel)
     // =======================================================================
-    // TryWrite is used on DropOldest/DropNewest channels - it never blocks
-    // and returns false only if the item was dropped, which is intentional.
-    // WriteAsync is used on Wait channels - it yields the calling coroutine
-    // until space is available rather than blocking a thread.
+    // DropOldest/DropNewest channels use void TryWrite - their drops are
+    // intentional and callers do not need to observe them.
     //
-    // All five are marked internal so nothing outside IronGOAL.dll can
-    // publish to a channel directly.
+    // Wait-mode channels (Render, Memory, Physics) return bool so their
+    // per-backing-class publish wrappers can implement the process-suspend
+    // retry loop.  Callers must NOT call these directly - use the wrappers
+    // in GraphicsSystem, MemoryArena, and PhysicsSystem respectively, which
+    // own the suspend/retry/drop-counter logic.
+    //
+    // The process-suspend retry pattern in those wrappers:
+    //   if (!bus.PublishX(cmd)) {
+    //       proc.SetPredicate(() => bus.PublishX(cmd));
+    //       proc.YieldToScheduler();
+    //       proc.ClearPredicate();
+    //   }
+    // This suspends only the script process, never a .NET thread.
     
-    internal void PublishRender(RenderCommand cmd) =>
+    /// <summary>
+    /// Single non-blocking enqueue attempt.  Returns <c>true</c> if
+    /// accepted, <c>false</c> if the channel is currently full.
+    /// Callers must retry via process suspension - see wrapper in
+    /// <c>GraphicsSystem</c>.
+    /// </summary>
+    internal bool PublishRender(RenderCommand cmd) =>
         _renderChannel.Writer.TryWrite(cmd);
     
     internal void PublishAudio(AudioCommand cmd) =>
@@ -124,6 +198,15 @@ public sealed class EventBus
     
     internal void PublishGameEvent(GameEvent evt) =>
         _gameEventChannel.Writer.TryWrite(evt);
+    
+    /// <summary>
+    /// Single non-blocking enqueue attempt.  Returns <c>true</c> if
+    /// accepted, <c>false</c> if the channel is currently full.
+    /// Callers must retry via process suspension - see wrapper in
+    /// <c>PhysicsSystem</c>.
+    /// </summary>
+    internal bool PublishPhysics(PhysicsCommand cmd) =>
+        _physicsChannel.Writer.TryWrite(cmd);
     
     internal void PublishDebug(DebugCommand cmd, long frameId, float gameTime) =>
         _debugChannel.Writer.TryWrite(new Timestamped<DebugCommand>
@@ -133,13 +216,30 @@ public sealed class EventBus
             GameTime = gameTime,
         });
     
-    internal void PublishMemory(MemoryEvent evt) =>
+    /// <summary>
+    /// Single non-blocking enqueue attempt.  Returns <c>true</c> if
+    /// accepted, <c>false</c> if the channel is currently full.
+    /// Callers must retry via process suspension - see wrapper in
+    /// <c>MemoryArena</c>.
+    /// </summary>
+    internal bool PublishMemory(MemoryEvent evt) =>
         _memoryChannel.Writer.TryWrite(evt);
+    
+    // =======================================================================
+    // NO-CONTEXT DROP HELPERS
+    // =======================================================================
+    // Called by per-backing-class publish wrappers when TryWrite fails and
+    // no ScriptProcess context is present to suspend. Records the drop so
+    // the host can observe it via the public drop-count properties above.
+    
+    internal static void RecordRenderDrop()  => Interlocked.Increment(ref _renderDropCount);
+    internal static void RecordMemoryDrop()  => Interlocked.Increment(ref _memoryDropCount);
+    internal static void RecordPhysicsDrop() => Interlocked.Increment(ref _physicsDropCount);
     
     // =======================================================================
     // SHUTDOWN
     // =======================================================================
-    // Called by Kernel.Dispose(). Completing a channel signals to any
+    // Called by Kernel.Dispose().  Completing a channel signals to any
     // awaiting ConsumeAsync loops that no further items will arrive,
     // allowing them to exit cleanly without cancellation tokens.
     
@@ -148,6 +248,7 @@ public sealed class EventBus
         _renderChannel.Writer.TryComplete();
         _audioChannel.Writer.TryComplete();
         _gameEventChannel.Writer.TryComplete();
+        _physicsChannel.Writer.TryComplete();
         _debugChannel.Writer.TryComplete();
         _memoryChannel.Writer.TryComplete();
     }

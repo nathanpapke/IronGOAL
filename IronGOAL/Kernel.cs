@@ -42,8 +42,9 @@ public class Kernel
             config.RenderChannelCapacity,
             config.AudioChannelCapacity,
             config.GameEventChannelCapacity,
-            config.DebugChannelCapacity,
-            config.MemoryChannelCapacity);
+            physicsCapacity: config.PhysicsChannelCapacity,
+            debugCapacity: config.DebugChannelCapacity,
+            memoryCapacity: config.MemoryChannelCapacity);
         
         _scheduler = new ProcessScheduler();
         

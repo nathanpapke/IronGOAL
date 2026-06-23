@@ -284,6 +284,7 @@ public sealed class Host : IDisposable
     public ChannelReader<RenderCommand>              RenderCommands => _kernel.EventBus.RenderCommands;
     public ChannelReader<AudioCommand>               AudioCommands  => _kernel.EventBus.AudioCommands;
     public ChannelReader<GameEvent>                  GameEvents     => _kernel.EventBus.GameEvents;
+    public ChannelReader<PhysicsCommand>             PhysicsCommands => _kernel.EventBus.PhysicsCommands;
     public ChannelReader<Timestamped<DebugCommand>>  DebugCommands  => _kernel.EventBus.DebugCommands;
     public ChannelReader<MemoryEvent>                MemoryEvents   => _kernel.EventBus.MemoryEvents;
     
@@ -333,6 +334,10 @@ public sealed class Host : IDisposable
         if (config.RenderChannelCapacity <= 0)
             return GoalResult.Fail(GoalErrorCode.InvalidConfig,
                 "RenderChannelCapacity must be > 0.");
+        
+        if (config.PhysicsChannelCapacity <= 0)
+            return GoalResult.Fail(GoalErrorCode.InvalidConfig,
+                "PhysicsChannelCapacity must be > 0.");
         
         if (config.LogHandler is null)
             return GoalResult.Fail(GoalErrorCode.InvalidConfig,
