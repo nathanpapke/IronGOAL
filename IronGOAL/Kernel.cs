@@ -64,6 +64,7 @@ public class Kernel
         AudioSystem.Install(EventBus);
         InputSystem.Install(EventBus);
         GraphicsSystem.Install(EventBus);
+        PhysicsSystem.Install(EventBus);
         RegisterAll();
         
         _log(GoalLogSeverity.Info, GoalErrorCode.None, "Kernel booted successfully.");
@@ -397,6 +398,25 @@ public class Kernel
         DefineFunction("debug-draw-line", GraphicsSystem.DebugDrawLine);
         DefineFunction("debug-draw-sphere", GraphicsSystem.DebugDrawSphere);
         DefineFunction("debug-draw-text", GraphicsSystem.DebugDrawText);
+        
+        // ===================================================================
+        // PHYSICS SYSTEM
+        // ===================================================================
+        
+        DefineFunction("raycast", PhysicsSystem.Raycast);
+        DefineFunction("raycast-filtered", PhysicsSystem.RaycastFiltered);
+        DefineFunction("raycast-all", PhysicsSystem.RaycastAll);
+        DefineFunction("overlap-sphere", PhysicsSystem.OverlapSphere);
+        DefineFunction("overlap-box", PhysicsSystem.OverlapBox);
+        DefineFunction("apply-force!", PhysicsSystem.ApplyForce);
+        DefineFunction("apply-impulse!", PhysicsSystem.ApplyImpulse);
+        DefineFunction("set-velocity!", PhysicsSystem.SetVelocity);
+        DefineFunction("set-kinematic!", PhysicsSystem.SetKinematic);
+        DefineFunction("get-velocity", PhysicsSystem.GetVelocity);
+        DefineFunction("ground-probe", PhysicsSystem.GroundProbe);
+        DefineFunction("get-ground-height", PhysicsSystem.GetGroundHeight);
+        DefineFunction("project-on-navmesh", PhysicsSystem.ProjectOnNavmesh);
+        DefineFunction("find-path", PhysicsSystem.FindPath);
     }
     
     // =======================================================================
