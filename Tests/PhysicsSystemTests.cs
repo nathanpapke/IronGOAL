@@ -3,6 +3,7 @@ using System.Numerics;
 using IronScheme;
 using IronGOAL;
 using IronGOAL.Backing;
+using Xunit;
 
 namespace Tests;
 
