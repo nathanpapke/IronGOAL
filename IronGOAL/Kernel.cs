@@ -65,6 +65,7 @@ public class Kernel
         InputSystem.Install(EventBus);
         GraphicsSystem.Install(EventBus);
         PhysicsSystem.Install(EventBus);
+        GameMemory.Install(EventBus);
         RegisterAll();
         
         _log(GoalLogSeverity.Info, GoalErrorCode.None, "Kernel booted successfully.");
@@ -417,6 +418,22 @@ public class Kernel
         DefineFunction("get-ground-height", PhysicsSystem.GetGroundHeight);
         DefineFunction("project-on-navmesh", PhysicsSystem.ProjectOnNavmesh);
         DefineFunction("find-path", PhysicsSystem.FindPath);
+        
+        // ===================================================================
+        // GAME MEMORY
+        // ===================================================================
+        
+        DefineFunction("kmalloc", GameMemory.Alloc);
+        DefineFunction("malloc", GameMemory.ManagedAlloc);
+        DefineFunction("kfree", GameMemory.Free);
+        DefineFunction("kmemopen", GameMemory.MemOpen);
+        DefineFunction("kmemclose", GameMemory.MemClose);
+        DefineFunction("new-dynamic-structure", GameMemory.NewDynamicStructure);
+        DefineFunction("heap-bytes-used", GameMemory.HeapBytesUsed);
+        DefineFunction("heap-bytes-total", GameMemory.HeapBytesTotal);
+        DefineFunction("heap-reset!", GameMemory.HeapReset);
+        DefineFunction("obj-serialize", GameMemory.Serialize);
+        DefineFunction("obj-deserialize", GameMemory.Deserialize);
     }
     
     // =======================================================================
