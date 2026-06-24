@@ -434,6 +434,19 @@ public class Kernel
         DefineFunction("heap-reset!", GameMemory.HeapReset);
         DefineFunction("obj-serialize", GameMemory.Serialize);
         DefineFunction("obj-deserialize", GameMemory.Deserialize);
+        
+        // ===================================================================
+        // TYPE SYSTEM
+        // ===================================================================
+        
+        DefineFunction("define-type", TypeSystem.DefineType);
+        DefineFunction("type-size", TypeSystem.TypeSize);
+        DefineFunction("type-field-offset", TypeSystem.TypeFieldOffset);
+        DefineFunction("type-parent", TypeSystem.TypeParent);
+        DefineFunction("method-set!", TypeSystem.SetMethod);
+        DefineFunction("method-get", TypeSystem.GetMethod);
+        DefineFunction("is-type?", TypeSystem.IsType);
+        DefineFunction("type-of", TypeSystem.TypeOf);
     }
     
     // =======================================================================
