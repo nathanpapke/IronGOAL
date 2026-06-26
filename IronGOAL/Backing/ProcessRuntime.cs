@@ -2,6 +2,8 @@ using System;
 using IronScheme;
 using IronScheme.Runtime;
 
+using IronGOAL.Bus;
+
 namespace IronGOAL.Backing;
 
 /// <summary>
@@ -18,6 +20,7 @@ namespace IronGOAL.Backing;
 public static class ProcessRuntime
 {
     private static ProcessScheduler? _scheduler = new();
+    private static EventBus?         _bus;
     
     /// <summary>
     /// Called by <c>Kernel</c> after constructing its
@@ -25,6 +28,14 @@ public static class ProcessRuntime
     /// </summary>
     public static void Install(ProcessScheduler scheduler) =>
         _scheduler = scheduler;
+    
+    /// <summary>
+    /// Called by <c>Kernel</c> after constructing its <see cref="EventBus"/>
+    /// and before <c>RegisterAll()</c>.  Required for <c>kernel-shutdown</c>
+    /// to publish its lifecycle signal.
+    /// </summary>
+    public static void InstallBus(EventBus bus) =>
+        _bus = bus;
     
     private static ProcessScheduler Scheduler => _scheduler;
     
@@ -93,7 +104,7 @@ public static class ProcessRuntime
     
     /// <summary>
     /// Queue a state transition, deferred to the next frame boundary.
-    /// <para>Scheme: <c>(go-state handle new-state-name)</c></para>
+    /// <para>Scheme: <c>(go handle new-state-name)</c></para>
     /// </summary>
     public static object GoState(object[] args)
     {
@@ -105,7 +116,7 @@ public static class ProcessRuntime
     
     /// <summary>
     /// Register the four lifecycle lambdas for a (type, state) pair.
-    /// <para>Scheme: <c>(define-state type state enter update exit event)</c></para>
+    /// <para>Scheme: <c>(defstate type state enter update exit event)</c></para>
     /// </summary>
     public static object DefineState(object[] args)
     {
@@ -161,6 +172,67 @@ public static class ProcessRuntime
     }
     
     // =======================================================================
+    // Cross-Process Calls
+    // =======================================================================
+    
+    /// <summary>
+    /// Run a callable in the context of another process and return its result.
+    ///
+    /// <para>Scheme: <c>(run-function-in-process handle callable . args)</c></para>
+    /// </summary>
+    public static object RunInProcess(object[] args)
+    {
+        if (args.Length < 2 || args[1] is not Callable callable)
+            return "#f".Eval();
+        
+        long targetHandle = Convert.ToInt64(args[0]);
+        
+        // Must be called from a running process - we need the caller handle
+        // to key the result table and to detect self-call deadlocks.
+        if (ProcessScheduler.CurrentProcess is not { } caller)
+        {
+            Console.Error.WriteLine(
+                "[ProcessRuntime] (run-function-in-process) called outside a running " +
+                "process — returning #f.");
+            return "#f".Eval();
+        }
+        
+        // Pack any trailing arguments for the callable.
+        object[] callArgs = args.Length > 2
+            ? args[2..]
+            : Array.Empty<object>();
+        
+        bool enqueued = Scheduler.EnqueueCallInProcess(
+            targetHandle, caller.Handle, callable, callArgs);
+        
+        if (!enqueued)
+            return "#f".Eval();
+        
+        // Suspend the calling process until the target deposits the result.
+        return Scheduler.WaitForCallResult(caller.Handle) ?? "#f".Eval();
+    }
+ 
+    /// <summary>
+    /// Set a one-shot pre-update callable on another process.
+    ///
+    /// <para>Scheme: <c>(set-to-run-function handle callable . args)</c></para>
+    /// </summary>
+    public static object SetToRun(object[] args)
+    {
+        if (args.Length < 2 || args[1] is not Callable callable)
+            return "nil".Eval();
+        
+        long targetHandle = Convert.ToInt64(args[0]);
+        
+        object[] callArgs = args.Length > 2
+            ? args[2..]
+            : Array.Empty<object>();
+        
+        Scheduler.SetPreUpdate(targetHandle, callable, callArgs);
+        return "nil".Eval();
+    }
+    
+    // =======================================================================
     // Process Communication
     // =======================================================================
     
@@ -202,6 +274,32 @@ public static class ProcessRuntime
         long handle   = args.Length > 0 ? Convert.ToInt64(args[0])  : 0L;
         int  priority = args.Length > 1 ? Convert.ToInt32(args[1]) : 0;
         Scheduler.SetPriority(handle, priority);
+        return "nil".Eval();
+    }
+    
+    // =======================================================================
+    // Kernel Shutdown
+    // =======================================================================
+    
+    /// <summary>
+    /// Publishes a <see cref="GameEventType.KernelShutdown"/> signal to the
+    /// host via the <see cref="EventBus"/>.  IronGOAL itself does not stop
+    /// ticking - the host reads this event during its drain loop and decides
+    /// whether to call <c>Kernel.Dispose()</c> or otherwise shut down.
+    ///
+    /// <para>Scheme: <c>(kernel-shutdown)</c></para>
+    /// </summary>
+    public static object KernelShutdown(object[] args)
+    {
+        _bus?.PublishGameEvent(new GameEvent
+        {
+            Type     = GameEventType.KernelShutdown,
+            EntityId = -1,
+            Param0   = 0,
+            Param1   = 0,
+            Param2   = 0,
+            Param3   = 0,
+        });
         return "nil".Eval();
     }
 }

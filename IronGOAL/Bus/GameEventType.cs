@@ -11,5 +11,6 @@ public enum GameEventType
     LevelLoad,          // Request a level streaming operation.
     LevelUnload,
     PlayerControlEnabled,
-    PlayerControlDisabled
+    PlayerControlDisabled,
+    KernelShutdown
 }

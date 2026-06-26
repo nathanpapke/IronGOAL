@@ -34,9 +34,9 @@ internal sealed class ScriptProcess : IDisposable
     // Coroutine Gates
     // =======================================================================
     
-    // Scheduler → process: "your turn, run"
+    // Scheduler -> process: "your turn, run"
     private readonly ManualResetEventSlim _resumeGate  = new(initialState: false);
-    // Process → scheduler: "I've yielded, your turn"
+    // Process -> scheduler: "I've yielded, your turn"
     private readonly ManualResetEventSlim _suspendGate = new(initialState: false);
     
     private Thread? _thread;
@@ -48,6 +48,9 @@ internal sealed class ScriptProcess : IDisposable
     
     private int         _framesRemaining; // >0 while inside SuspendForFrames
     private Func<bool>? _predicate;       // non-null while inside SuspendUntil
+    private (Callable Fn, object[] Args)? _pendingPreUpdate;    // set by (set-to-run-function)
+    private readonly ConcurrentQueue<(Callable Fn, object[] Args, long CallerHandle)>
+        _pendingCalls = new();            // injected by (run-function-in-process)
     
     // =======================================================================
     // Event Queue
@@ -225,6 +228,77 @@ internal sealed class ScriptProcess : IDisposable
         Callable? eventProc = _scheduler.GetEventProc(ProcessTypeName, CurrentState);
         while (_events.TryDequeue(out var ev))
             eventProc?.Call(this, ev.Type, ev.Data);
+    }
+    
+    // =======================================================================
+    // 
+    // =======================================================================
+    
+    /// <summary>
+    /// Sets the one-shot pre-update callable for this process.
+    /// Overwrites any previously set but not-yet-fired callable.
+    /// Called from the scheduler thread via
+    /// <see cref="ProcessScheduler.SetPreUpdate"/>.
+    /// </summary>
+    internal void SetPendingPreUpdate(Callable fn, object[] args) =>
+        _pendingPreUpdate = (fn, args);
+    
+    /// <summary>
+    /// If a pre-update callable is pending, fires it and clears the slot.
+    /// Called by the Tick loop before <see cref="DrainPendingCalls"/> and
+    /// <see cref="DrainEvents"/>.
+    /// </summary>
+    internal void FirePendingPreUpdate()
+    {
+        if (_pendingPreUpdate is not { } entry) return;
+        _pendingPreUpdate = null;
+        try
+        {
+            entry.Fn.Call(entry.Args);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(
+                $"[ProcessScheduler] Pre-update callable on '{Name}' ({Handle}) faulted: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Enqueues a cross-process call from another process.
+    /// Called from the scheduler thread via
+    /// <see cref="ProcessScheduler.EnqueueCallInProcess"/>.
+    /// </summary>
+    internal void EnqueuePendingCall(Callable fn, object[] args, long callerHandle) =>
+        _pendingCalls.Enqueue((fn, args, callerHandle));
+    
+    /// <summary>
+    /// Drains all pending cross-process calls, invokes each callable, and
+    /// deposits the return value into the scheduler's <c>_callResults</c>
+    /// table so the waiting caller process can wake next frame.
+    /// Called by the Tick loop after <see cref="FirePendingPreUpdate"/> and
+    /// before <see cref="DrainEvents"/>.
+    /// </summary>
+    internal void DrainPendingCalls(ProcessScheduler scheduler)
+    {
+        while (_pendingCalls.TryDequeue(out var entry))
+        {
+            object? result = null;
+            try
+            {
+                result = entry.Fn.Call(entry.Args);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine(
+                    $"[ProcessScheduler] Pending call on '{Name}' ({Handle}) faulted: {ex.Message}");
+            }
+            finally
+            {
+                // Always deposit - even on exception - so the caller does not
+                // block forever.  A null result on exception is acceptable.
+                scheduler.DepositCallResult(entry.CallerHandle, result);
+            }
+        }
     }
     
     // =======================================================================

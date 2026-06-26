@@ -194,23 +194,19 @@ public class Kernel
         // GAME MATH
         // ===================================================================
         
-        DefineFunction("vec3", GameMath.Vec3);
         DefineFunction("vector+", GameMath.Vector3Add);
         DefineFunction("vector-", GameMath.Vector3Subtract);
-        DefineFunction("vector-scale", GameMath.Vector3Scale);
+        DefineFunction("vector-float*", GameMath.Vector3Scale);
         DefineFunction("vector-dot", GameMath.Vector3Dot);
         DefineFunction("vector-cross", GameMath.Vector3Cross);
         DefineFunction("vector-length", GameMath.Vector3Length);
-        DefineFunction("vector-normalize", GameMath.Vector3Normalize);
+        DefineFunction("vector-normalize!", GameMath.Vector3Normalize);
         DefineFunction("vector-distance", GameMath.Vector3Distance);
         DefineFunction("vector-lerp", GameMath.Vector3Lerp);
-        DefineFunction("vec4", GameMath.Vec4);
         DefineFunction("quat-identity", GameMath.QuatIdentity);
         DefineFunction("quat-from-axis-angle", GameMath.QuatFromAxisAngle);
-        DefineFunction("quat-from-euler", GameMath.QuatFromEuler);
         DefineFunction("quat*", GameMath.QuatMultiply);
         DefineFunction("quat-slerp", GameMath.QuatSlerp);
-        DefineFunction("quat-to-euler", GameMath.QuatToEuler);
         DefineFunction("quat-rotate-vec3", GameMath.QuatRotateVec3);
         DefineFunction("matrix-identity", GameMath.MatrixIdentity);
         DefineFunction("matrix*", GameMath.MatrixMultiply);
@@ -220,31 +216,12 @@ public class Kernel
         DefineFunction("matrix-transform-dir", GameMath.MatrixTransformDirection);
         DefineFunction("matrix-look-at", GameMath.MatrixLookAt);
         DefineFunction("matrix-perspective", GameMath.MatrixPerspective);
-        DefineFunction("transform-create", GameMath.TransformCreate);
-        DefineFunction("transform-get-pos", GameMath.TransformGetPosition);
-        DefineFunction("transform-set-pos!", GameMath.TransformSetPosition);
-        DefineFunction("transform-get-rot", GameMath.TransformGetRotation);
-        DefineFunction("transform-set-rot!", GameMath.TransformSetRotation);
-        DefineFunction("transform-forward", GameMath.TransformForward);
-        DefineFunction("transform-destroy!", GameMath.TransformDestroy);
-        DefineFunction("bbox-make", GameMath.BBoxMake);
-        DefineFunction("bbox-contains?", GameMath.BBoxContains);
-        DefineFunction("bbox-intersects?", GameMath.BBoxIntersects);
-        DefineFunction("bbox-center", GameMath.BBoxCenter);
         DefineFunction("lerp", GameMath.Lerp);
         DefineFunction("clamp", GameMath.Clamp);
-        DefineFunction("smooth-step", GameMath.SmoothStep);
-        DefineFunction("smoother-step", GameMath.SmootherStep);
         DefineFunction("deg->rad", GameMath.DegToRad);
         DefineFunction("rad->deg", GameMath.RadToDeg);
         DefineFunction("wrap-angle-180", GameMath.WrapAngle180);
         DefineFunction("angle-delta", GameMath.AngleDelta);
-        DefineFunction("units->meters", GameMath.UnitsToMeters);
-        DefineFunction("meters->units", GameMath.MetersToUnits);
-        DefineFunction("random-float", GameMath.RandomFloat);
-        DefineFunction("random-int", GameMath.RandomInt);
-        DefineFunction("random-point-in-sphere", GameMath.RandomPointInSphere);
-        DefineFunction("random-on-sphere", GameMath.RandomOnSphere);
         DefineFunction("fabs", GameMath.Fabs);
         DefineFunction("sqrtf", GameMath.Sqrtf);
         DefineFunction("fequal-epsilon?", GameMath.FEqualEpsilon);
@@ -262,162 +239,40 @@ public class Kernel
         DefineFunction("set-time-scale!", GameClock.SetTimeScale);
         DefineFunction("seconds->frames", GameClock.SecondsToFrames);
         DefineFunction("frames->seconds", GameClock.FramesToSeconds);
-        DefineFunction("timer-start", GameClock.TimerStart);
-        DefineFunction("timer-repeat", GameClock.TimerRepeat);
-        DefineFunction("timer-cancel", GameClock.TimerCancel);
-        DefineFunction("timer-remaining", GameClock.TimerRemaining);
         
         // ===================================================================
         // PROCESS RUNTIME
         // ===================================================================
         
-        DefineFunction("process-spawn", ProcessRuntime.ProcessSpawn);
-        DefineFunction("process-kill", ProcessRuntime.ProcessKill);
+        DefineFunction("run-process-and-function", ProcessRuntime.ProcessSpawn);
+        DefineFunction("kill-process", ProcessRuntime.ProcessKill);
         DefineFunction("process-alive?", ProcessRuntime.IsProcessAlive);
-        DefineFunction("process-parent", ProcessRuntime.GetProcessParent);
-        DefineFunction("process-children", ProcessRuntime.GetProcessChildren);
-        DefineFunction("go-state", ProcessRuntime.GoState);
-        DefineFunction("define-state", ProcessRuntime.DefineState);
+        DefineFunction("go", ProcessRuntime.GoState);
+        DefineFunction("defstate", ProcessRuntime.DefineState);
         DefineFunction("suspend", ProcessRuntime.Suspend);
-        DefineFunction("suspend-for-frames", ProcessRuntime.SuspendForFrames);
-        DefineFunction("suspend-until", ProcessRuntime.SuspendUntil);
+        DefineFunction("run-function-in-process", ProcessRuntime.RunInProcess);
+        DefineFunction("set-to-run-function", ProcessRuntime.SetToRun);
         DefineFunction("send-event", ProcessRuntime.SendEvent);
-        DefineFunction("broadcast-event", ProcessRuntime.BroadcastEvent);
-        DefineFunction("set-process-priority!", ProcessRuntime.SetProcessPriority);
+        DefineFunction("kernel-shutdown", ProcessRuntime.KernelShutdown);
         
         // ===================================================================
         // ENTITY SYSTEM
         // ===================================================================
         
         DefineFunction("entity-spawn", EntitySystem.Spawn);
-        DefineFunction("entity-destroy!", EntitySystem.Destroy);
-        DefineFunction("entity-exists?", EntitySystem.Exists);
-        DefineFunction("entity-get-pos", EntitySystem.GetPosition);
-        DefineFunction("entity-set-pos!", EntitySystem.SetPosition);
-        DefineFunction("entity-get-rot", EntitySystem.GetRotation);
-        DefineFunction("entity-set-rot!", EntitySystem.SetRotation);
-        DefineFunction("entity-get-scale", EntitySystem.GetScale);
-        DefineFunction("entity-set-scale!", EntitySystem.SetScale);
-        DefineFunction("entity-get-prop", EntitySystem.GetProperty);
-        DefineFunction("entity-set-prop!", EntitySystem.SetProperty);
-        DefineFunction("entity-has-prop?", EntitySystem.HasProperty);
-        DefineFunction("entity-has-component?", EntitySystem.HasComponent);
-        DefineFunction("entity-get-component", EntitySystem.GetComponent);
-        DefineFunction("entity-find-by-type", EntitySystem.FindByType);
-        DefineFunction("entity-find-by-tag", EntitySystem.FindByTag);
-        DefineFunction("entity-find-in-radius", EntitySystem.FindInRadius);
-        DefineFunction("entity-find-nearest", EntitySystem.FindNearest);
-        DefineFunction("entity-add-tag!", EntitySystem.AddTag);
-        DefineFunction("entity-remove-tag!", EntitySystem.RemoveTag);
-        DefineFunction("entity-has-tag?", EntitySystem.HasTag);
-        DefineFunction("entity-bind-process!", EntitySystem.BindProcess);
-        DefineFunction("entity-get-process", EntitySystem.GetProcess);
-        DefineFunction("entity-get-entity", EntitySystem.GetEntity);
-        
-        // ===================================================================
-        // ANIMATION SYSTEM
-        // ===================================================================
-        
-        DefineFunction("anim-play", AnimationSystem.Play);
-        DefineFunction("anim-play-blend", AnimationSystem.PlayBlend);
-        DefineFunction("anim-stop", AnimationSystem.Stop);
-        DefineFunction("anim-pause", AnimationSystem.Pause);
-        DefineFunction("anim-current", AnimationSystem.Current);
-        DefineFunction("anim-current-frame", AnimationSystem.CurrentFrame);
-        DefineFunction("anim-length", AnimationSystem.Length);
-        DefineFunction("anim-playing?", AnimationSystem.IsPlaying);
-        DefineFunction("anim-blending?", AnimationSystem.IsBlending);
-        DefineFunction("define-blend-tree", AnimationSystem.DefineBlendTree);
-        DefineFunction("set-blend-param!", AnimationSystem.SetBlendTreeParam);
-        DefineFunction("get-blend-param", AnimationSystem.GetBlendTreeParam);
-        DefineFunction("get-joint-transform", AnimationSystem.GetJointTransform);
-        DefineFunction("set-joint-override!", AnimationSystem.SetJointOverride);
-        DefineFunction("clear-joint-override!", AnimationSystem.ClearJointOverride);
-        DefineFunction("anim-on-event", AnimationSystem.OnEvent);
-        DefineFunction("set-ik-target!", AnimationSystem.SetIKTarget);
-        DefineFunction("set-ik-weight!", AnimationSystem.SetIKWeight);
+        DefineFunction("entity-kill", EntitySystem.Destroy);
         
         // ===================================================================
         // AUDIO SYSTEM
         // ===================================================================
         
-        DefineFunction("sound-play", AudioSystem.Play);
-        DefineFunction("sound-play-2d", AudioSystem.Play2D);
-        DefineFunction("sound-stop", AudioSystem.Stop);
-        DefineFunction("sound-stop-all", AudioSystem.StopAll);
-        DefineFunction("sound-set-volume!", AudioSystem.SetVolume);
-        DefineFunction("sound-set-pitch!", AudioSystem.SetPitch);
-        DefineFunction("sound-set-param!", AudioSystem.SetParam);
-        DefineFunction("music-play", AudioSystem.MusicPlay);
-        DefineFunction("music-stop", AudioSystem.MusicStop);
-        DefineFunction("music-set-intensity!", AudioSystem.MusicSetIntensity);
-        DefineFunction("set-listener-pos!", AudioSystem.SetListenerPos);
-        DefineFunction("set-reverb!", AudioSystem.SetReverb);
-        DefineFunction("dialog-play", AudioSystem.DialogPlay);
-        DefineFunction("dialog-playing?", AudioSystem.IsDialogPlaying);
-        
-        // ===================================================================
-        // INPUT SYSTEM
-        // ===================================================================
-        
-        DefineFunction("input-pressed?", InputSystem.Pressed);
-        DefineFunction("input-released?", InputSystem.Released);
-        DefineFunction("input-held?", InputSystem.Held);
-        DefineFunction("input-analog", InputSystem.Analog);
-        DefineFunction("input-left-stick", InputSystem.LeftStick);
-        DefineFunction("input-right-stick", InputSystem.RightStick);
-        DefineFunction("input-left-trigger", InputSystem.LeftTrigger);
-        DefineFunction("input-right-trigger", InputSystem.RightTrigger);
-        DefineFunction("input-mouse-pos", InputSystem.MousePosition);
-        DefineFunction("input-mouse-delta", InputSystem.MouseDelta);
-        DefineFunction("input-mouse-button?", InputSystem.MouseButton);
-        DefineFunction("input-set-vibration!", InputSystem.SetVibration);
-        
-        // ===================================================================
-        // GRAPHICS SYSTEM
-        // ===================================================================
-        
-        DefineFunction("camera-set-pos!", GraphicsSystem.CameraSetPosition);
-        DefineFunction("camera-set-rot!", GraphicsSystem.CameraSetRotation);
-        DefineFunction("camera-set-fov!", GraphicsSystem.CameraSetFOV);
-        DefineFunction("camera-look-at!", GraphicsSystem.CameraLookAt);
-        DefineFunction("camera-get-pos", GraphicsSystem.CameraGetPosition);
-        DefineFunction("camera-get-forward", GraphicsSystem.CameraGetForward);
-        DefineFunction("world->screen", GraphicsSystem.WorldToScreen);
-        DefineFunction("screen->world-ray", GraphicsSystem.ScreenToWorldRay);
-        DefineFunction("fx-spawn", GraphicsSystem.FxSpawn);
-        DefineFunction("fx-spawn-attached", GraphicsSystem.FxSpawnAttached);
-        DefineFunction("fx-stop", GraphicsSystem.FxStop);
-        DefineFunction("fx-set-param!", GraphicsSystem.FxSetParam);
-        DefineFunction("set-bloom!", GraphicsSystem.SetBloom);
-        DefineFunction("set-color-grade!", GraphicsSystem.SetColorGrade);
-        DefineFunction("set-motion-blur!", GraphicsSystem.SetMotionBlur);
-        DefineFunction("screen-fade!", GraphicsSystem.ScreenFade);
-        DefineFunction("screen-shake!", GraphicsSystem.ScreenShake);
-        DefineFunction("set-level-visible!", GraphicsSystem.SetLevelVisible);
-        DefineFunction("set-entity-visible!", GraphicsSystem.SetEntityVisible);
-        DefineFunction("debug-draw-line", GraphicsSystem.DebugDrawLine);
-        DefineFunction("debug-draw-sphere", GraphicsSystem.DebugDrawSphere);
-        DefineFunction("debug-draw-text", GraphicsSystem.DebugDrawText);
-        
-        // ===================================================================
-        // PHYSICS SYSTEM
-        // ===================================================================
-        
-        DefineFunction("raycast", PhysicsSystem.Raycast);
-        DefineFunction("raycast-filtered", PhysicsSystem.RaycastFiltered);
-        DefineFunction("raycast-all", PhysicsSystem.RaycastAll);
-        DefineFunction("overlap-sphere", PhysicsSystem.OverlapSphere);
-        DefineFunction("overlap-box", PhysicsSystem.OverlapBox);
-        DefineFunction("apply-force!", PhysicsSystem.ApplyForce);
-        DefineFunction("apply-impulse!", PhysicsSystem.ApplyImpulse);
-        DefineFunction("set-velocity!", PhysicsSystem.SetVelocity);
-        DefineFunction("set-kinematic!", PhysicsSystem.SetKinematic);
-        DefineFunction("get-velocity", PhysicsSystem.GetVelocity);
-        DefineFunction("ground-probe", PhysicsSystem.GroundProbe);
-        DefineFunction("get-ground-height", PhysicsSystem.GetGroundHeight);
-        DefineFunction("project-on-navmesh", PhysicsSystem.ProjectOnNavmesh);
-        DefineFunction("find-path", PhysicsSystem.FindPath);
+        DefineFunction("snd-play", AudioSystem.Play);
+        DefineFunction("snd-play-2d", AudioSystem.Play2D);
+        DefineFunction("snd-stop", AudioSystem.Stop);
+        DefineFunction("snd-stop-all", AudioSystem.StopAll);
+        DefineFunction("snd-set-volume!", AudioSystem.SetVolume);
+        DefineFunction("snd-set-pitch!", AudioSystem.SetPitch);
+        DefineFunction("snd-set-param!", AudioSystem.SetParam);
         
         // ===================================================================
         // GAME MEMORY
@@ -429,23 +284,14 @@ public class Kernel
         DefineFunction("kmemopen", GameMemory.MemOpen);
         DefineFunction("kmemclose", GameMemory.MemClose);
         DefineFunction("new-dynamic-structure", GameMemory.NewDynamicStructure);
-        DefineFunction("heap-bytes-used", GameMemory.HeapBytesUsed);
-        DefineFunction("heap-bytes-total", GameMemory.HeapBytesTotal);
-        DefineFunction("heap-reset!", GameMemory.HeapReset);
-        DefineFunction("obj-serialize", GameMemory.Serialize);
-        DefineFunction("obj-deserialize", GameMemory.Deserialize);
         
         // ===================================================================
         // TYPE SYSTEM
         // ===================================================================
         
-        DefineFunction("define-type", TypeSystem.DefineType);
-        DefineFunction("type-size", TypeSystem.TypeSize);
-        DefineFunction("type-field-offset", TypeSystem.TypeFieldOffset);
-        DefineFunction("type-parent", TypeSystem.TypeParent);
+        DefineFunction("deftype", TypeSystem.DefineType);
         DefineFunction("method-set!", TypeSystem.SetMethod);
-        DefineFunction("method-get", TypeSystem.GetMethod);
-        DefineFunction("is-type?", TypeSystem.IsType);
+        DefineFunction("type-type?", TypeSystem.IsType);
         DefineFunction("type-of", TypeSystem.TypeOf);
     }
     

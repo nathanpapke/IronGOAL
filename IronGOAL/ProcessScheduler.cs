@@ -42,6 +42,18 @@ public sealed class ProcessScheduler : IDisposable
     private readonly ConcurrentQueue<(long Handle, string State)> _transitionQueue = new();
     private readonly ConcurrentBag<long>                          _killQueue       = new();
     
+    // Cross-process call result table.
+    //
+    // Key   = handle of the *calling* process that is suspended waiting for
+    //         the result of (run-function-in-process target callable args...).
+    // Value = the object the target callable returned (may be null).
+    //
+    // A key present in the dictionary (even with a null value) is the wakeup
+    // signal: the calling process's SuspendUntil predicate checks for its own
+    // handle here, returning true when the entry exists.  TryRemove retrieves
+    // and removes atomically so the value is consumed exactly once.
+    private readonly ConcurrentDictionary<long, object?> _callResults = new();
+    
     // Clock
     
     private float _gameTime;
@@ -224,6 +236,100 @@ public sealed class ProcessScheduler : IDisposable
     }
     
     // =======================================================================
+    // Run Function In Process
+    // =======================================================================
+    
+    /// <summary>
+    /// Enqueues <paramref name="callable"/> (with <paramref name="callArgs"/>)
+    /// as a one-shot pending call on <paramref name="targetHandle"/>.  The
+    /// callable runs on the target process's thread at the start of its next
+    /// wakeup, before event delivery.  The result is deposited in
+    /// <see cref="_callResults"/> keyed by the <em>calling</em> process handle,
+    /// waking it via its SuspendUntil predicate.
+    /// <returns>
+    /// Returns <c>false</c> if the target is dead, not found, or the same
+    /// process as the caller (deadlock guard).  The caller is responsible for
+    /// returning <c>#f</c> to Scheme in that case without suspending.
+    /// </returns>
+    internal bool EnqueueCallInProcess(
+        long targetHandle, long callerHandle, Callable callable, object[] callArgs)
+    {
+        // Deadlock guard: a process cannot call into itself synchronously.
+        if (targetHandle == callerHandle)
+        {
+            Console.Error.WriteLine(
+                $"[ProcessScheduler] (run-function-in-process) target == caller ({callerHandle})" +
+                " — self-call would deadlock; returning #f.");
+            return false;
+        }
+        
+        if (!_processes.TryGetValue(targetHandle, out var target) ||
+            target.Status == ProcessStatus.Dead)
+        {
+            return false;
+        }
+        
+        target.EnqueuePendingCall(callable, callArgs, callerHandle);
+        return true;
+    }
+    
+    /// <summary>
+    /// Called by the Tick loop after a pending call completes on the target
+    /// process thread.  Deposits <paramref name="result"/> so the waiting
+    /// caller process's predicate becomes true and it wakes next frame.
+    /// </summary>
+    internal void DepositCallResult(long callerHandle, object? result) =>
+        _callResults[callerHandle] = result;
+ 
+    /// <summary>
+    /// Called by <see cref="RunInProcessAndWait"/> to block the calling
+    /// process until its result has been deposited.  Returns the result and
+    /// removes the entry atomically.
+    /// </summary>
+    internal object? WaitForCallResult(long callerHandle)
+    {
+        if (CurrentProcess is not { } proc)
+        {
+            Console.Error.WriteLine(
+                "[ProcessScheduler] WaitForCallResult called outside a running process — ignored.");
+            return null;
+        }
+        
+        // Suspend until the target has run and deposited the result.
+        proc.SetPredicate(() => _callResults.ContainsKey(callerHandle));
+        proc.YieldToScheduler();
+        proc.ClearPredicate();
+        
+        _callResults.TryRemove(callerHandle, out var result);
+        return result;
+    }
+    
+    // =======================================================================
+    // Set To Run Function
+    // =======================================================================
+    
+    /// <summary>
+    /// Sets a one-shot pre-update callable on <paramref name="targetHandle"/>.
+    /// At the start of that process's next wakeup the callable fires before
+    /// the normal update proc.  If called again before the tick fires, the
+    /// second call overwrites the first (single-slot, matching GOAL semantics).
+    ///
+    /// <para>Fire-and-forget from the caller's perspective; returns immediately.</para>
+    /// </summary>
+    internal void SetPreUpdate(long targetHandle, Callable callable, object[] callArgs)
+    {
+        if (!_processes.TryGetValue(targetHandle, out var target) ||
+            target.Status == ProcessStatus.Dead)
+        {
+            Console.Error.WriteLine(
+                $"[ProcessScheduler] (set-to-run-function) target {targetHandle} not found or dead — ignored.");
+            return;
+        }
+        
+        target.SetPendingPreUpdate(callable, callArgs);
+    }
+    
+    // =======================================================================
     // Events
     // =======================================================================
     
@@ -312,7 +418,17 @@ public sealed class ProcessScheduler : IDisposable
         foreach (var p in runnable)
         {
             if (p.Status == ProcessStatus.Dead) continue;
+            
+            // a. Pre-update one-shot (set-to-run-function).
+            p.FirePendingPreUpdate();
+ 
+            // b. Pending calls from other processes (run-function-in-process).
+            p.DrainPendingCalls(this);
+ 
+            // c. Events.
             p.DrainEvents();
+ 
+            // d. Normal update.
             p.ResumeAndWait();
         }
         
