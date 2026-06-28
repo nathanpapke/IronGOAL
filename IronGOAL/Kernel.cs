@@ -283,6 +283,7 @@ public class Kernel
         DefineFunction("kfree", GameMemory.Free);
         DefineFunction("kmemopen", GameMemory.MemOpen);
         DefineFunction("kmemclose", GameMemory.MemClose);
+        DefineFunction("dma-to-iop", GameMemory.DmaToIop);
         DefineFunction("new-dynamic-structure", GameMemory.NewDynamicStructure);
         
         // ===================================================================

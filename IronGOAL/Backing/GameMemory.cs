@@ -25,8 +25,12 @@ public class GameMemory
     // Memory system is assigned the 900–999 range (reserved in the opcode
     // proposal) pending that pass.
  
-    private const int OpHeapBytesUsed  = 900; // query -> long bytes used
-    private const int OpHeapBytesTotal = 901; // query -> long bytes total
+    private const int OpAlloc               = 900; // query -> allocation handle (long) or null
+    private const int OpNewDynamicStructure = 901; // query -> typed handle; delegates to OpAlloc
+    private const int OpHeapBytesUsed       = 910; // query -> long bytes used
+    private const int OpHeapBytesTotal      = 911; // query -> long bytes total
+    private const int OpSerialize           = 920; // command; fire-and-return
+    private const int OpDeserialize         = 921; // command; fire-and-return
     
     // =======================================================================
     // QUERY RESPONSE TABLE
@@ -318,6 +322,32 @@ public class GameMemory
     }
     
     /// <summary>
+    /// Signals the host that a DMA transfer to the IOP has been requested.
+    /// This is a fire-and-forget notification; no allocation handle is returned.
+    /// The host may treat the event as a data-transfer signal or no-op it.
+    /// 
+    /// <para>Scheme: <c>(dma-to-iop dest src size)</c></para>
+    /// </summary>
+    public static object DmaToIop(object[] args)
+    {
+        // Require at least src and size; dest is IOP-side and unused in managed code.
+        if (args.Length < 3) return "#f".Eval();
+
+        int src  = args[1] is long ls ? (int)ls : args[1] is int is_ ? is_ : 0;
+        int size = args[2] is long lz ? (int)lz : args[2] is int iz  ? iz  : 0;
+
+        PublishMemory(new MemoryEvent
+        {
+            Type    = MemoryEventType.DmaTransfer,
+            Arena   = MemoryArenaId.Global,   // Not arena-scoped; sentinel value.
+            Address = src,
+            Size    = size,
+        });
+        
+        return "#t".Eval();
+    }
+    
+    /// <summary>
     /// Allocates a typed object on the named arena with an explicit byte size.
     /// This is the general-purpose typed allocator; most GOAL
     /// <c>(new 'global ...)</c> expressions compile down to this.
@@ -451,7 +481,7 @@ public class GameMemory
         {
             Type     = GameEventType.EntitySetState,
             EntityId = (int)(handle & 0x7FFF_FFFF),
-            Param0   = 902,  // OpSerialize - host dispatches on this
+            Param0   = 920,  // OpSerialize - host dispatches on this
             Param1   = 0,
             Param2   = 0,
             Param3   = 0,
@@ -480,7 +510,7 @@ public class GameMemory
         {
             Type     = GameEventType.EntitySetState,
             EntityId = (int)(blobHandle & 0x7FFF_FFFF),
-            Param0   = 903,  // OpDeserialize - host dispatches on this
+            Param0   = 921,  // OpDeserialize - host dispatches on this
             Param1   = typeHash,
             Param2   = 0,
             Param3   = 0,
