@@ -66,6 +66,8 @@ public class Kernel
         GraphicsSystem.Install(EventBus);
         PhysicsSystem.Install(EventBus);
         GameMemory.Install(EventBus);
+        DebugSystem.Install(EventBus);
+        DebugSystem.Configure(config.EnableDebugChannel);
         RegisterAll();
         
         _log(GoalLogSeverity.Info, GoalErrorCode.None, "Kernel booted successfully.");
@@ -295,6 +297,14 @@ public class Kernel
         DefineFunction("method-id", TypeSystem.MethodId);
         DefineFunction("type-type?", TypeSystem.IsType);
         DefineFunction("type-of", TypeSystem.TypeOf);
+        
+        // ===================================================================
+        // DEBUG SYSTEM
+        // ===================================================================
+        
+        DefineFunction("print", DebugSystem.Print);
+        DefineFunction("inspect", DebugSystem.Inspect);
+        DefineFunction("_format", DebugSystem.Format);
     }
     
     // =======================================================================
