@@ -33,6 +33,12 @@ public static class TypeSystem
         /// </summary>
         public ConcurrentDictionary<int, object> Methods { get; } = new();
         
+        /// <summary>
+        /// Method name -> vtable index, populated at <c>deftype</c> time from
+        /// the <c>:methods</c> block.  Used by <c>method-id</c> for reverse lookup.
+        /// </summary>
+        public ConcurrentDictionary<string, int> MethodIds { get; } = new();
+        
         public TypeRecord(
             string parent,
             IReadOnlyList<(string Name, string Type, int Offset)> fields,
@@ -85,7 +91,12 @@ public static class TypeSystem
             return "#f".Eval();
         
         // Parse variadic field pairs starting at args[2].
+        // Each arg is either:
+        //   - A field Cons pair: ("field-name" . ("field-type" . ()))
+        //   - A :methods block Cons: (":methods" . (<method-entry> ...))
+        //     where each method entry is a Cons whose car is the method name string.
         var fields  = new List<(string Name, string Type, int Offset)>();
+        var methodIds  = new Dictionary<string, int>();
         int offset  = 0;
         
         for (int i = 2; i < args.Length; i++)
@@ -93,6 +104,32 @@ public static class TypeSystem
             // Each field arg must be a Cons pair: ("field-name" . ("field-type" . ()))
             if (args[i] is not Cons pair)
                 continue;
+            
+            // Check for :methods keyword block.
+            var carStr = pair.car as string
+                         ?? (pair.car?.ToString() ?? string.Empty);
+            
+            if (carStr == ":methods")
+            {
+                // Walk the method list; assign IDs sequentially from 0.
+                int methodId = 0;
+                var methodList = pair.cdr;
+                while (methodList is Cons methodCons)
+                {
+                    // Each entry: (method-name arg-types... return-type)
+                    // We only need the name (car).
+                    if (methodCons.car is Cons entryPair)
+                    {
+                        var methodName = entryPair.car as string
+                                         ?? entryPair.car?.ToString() ?? string.Empty;
+                        if (!string.IsNullOrEmpty(methodName))
+                            methodIds[methodName] = methodId;
+                        methodId++;
+                    }
+                    methodList = methodCons.cdr;
+                }
+                continue;
+            }
             
             // car = field name
             if (pair.car is not string fieldName)
@@ -108,6 +145,8 @@ public static class TypeSystem
         }
         
         var record = new TypeRecord(parent, fields.AsReadOnly(), offset);
+        foreach (var (name, id) in methodIds)
+            record.MethodIds[name] = id;
         _types[typeName] = record;
         
         // Return computed byte size, matching what GOAL's TypeFlags.size holds
@@ -222,6 +261,29 @@ public static class TypeSystem
             : "#f".Eval();
     }
     
+    /// <summary>
+    /// Returns the integer vtable index for a named method on a registered type,
+    /// as declared in the <c>:methods</c> block of its <c>deftype</c>.
+    /// Returns <c>#f</c> if the type is unknown or the method name was not
+    /// declared in its <c>deftype</c>.
+    /// Mirrors GOAL's <c>method-id</c> kernel call used for virtual dispatch
+    /// in <c>.gc</c> scripts.
+    ///
+    /// <para>Scheme: <c>(method-id "type-name" "method-name")</c></para>
+    /// </summary>
+    public static object MethodId(object[] args)
+    {
+        if (args.Length < 2 || args[0] is not string typeName || args[1] is not string methodName)
+            return "#f".Eval();
+        
+        if (!_types.TryGetValue(typeName, out var record))
+            return "#f".Eval();
+        
+        return record.MethodIds.TryGetValue(methodName, out var id)
+            ? (long)id
+            : "#f".Eval();
+    }
+    
     // =======================================================================
     // TYPE CHECK
     // =======================================================================
@@ -231,7 +293,7 @@ public static class TypeSystem
     /// (via <see cref="object.GetType()"/>) matches <paramref name="typeName"/>
     /// exactly (flat equality, no inheritance walk).
     ///
-    /// <para>Scheme: <c>(is-type? obj "type-name")</c></para>
+    /// <para>Scheme: <c>(type-type? obj "type-name")</c></para>
     /// </summary>
     public static object IsType(object[] args)
     {

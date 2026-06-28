@@ -292,6 +292,7 @@ public class Kernel
         
         DefineFunction("deftype", TypeSystem.DefineType);
         DefineFunction("method-set!", TypeSystem.SetMethod);
+        DefineFunction("method-id", TypeSystem.MethodId);
         DefineFunction("type-type?", TypeSystem.IsType);
         DefineFunction("type-of", TypeSystem.TypeOf);
     }
