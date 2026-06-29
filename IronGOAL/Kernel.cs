@@ -69,6 +69,7 @@ public class Kernel
         DebugSystem.Install(EventBus);
         DebugSystem.Configure(config.EnableDebugChannel);
         AssetSystem.Install(EventBus);
+        FileSystem.Install(EventBus);
         RegisterAll();
         
         _log(GoalLogSeverity.Info, GoalErrorCode.None, "Kernel booted successfully.");
@@ -316,6 +317,20 @@ public class Kernel
         DefineFunction("loadb", AssetSystem.LoadBinary);
         DefineFunction("dgo-load", AssetSystem.DgoLoad);
         DefineFunction("unload", AssetSystem.Unload);
+        
+        // ===================================================================
+        // FILE SYSTEM
+        // ===================================================================
+        
+        DefineFunction("mc-run", FileSystem.McRun);
+        DefineFunction("mc-format", FileSystem.McFormat);
+        DefineFunction("mc-unformat", FileSystem.McUnformat);
+        DefineFunction("mc-createfile", FileSystem.McCreateFile);
+        DefineFunction("mc-save", FileSystem.McSave);
+        DefineFunction("mc-load", FileSystem.McLoad);
+        DefineFunction("mc-makefile", FileSystem.McMakeFile);
+        DefineFunction("mc-get-status", FileSystem.McGetStatus);
+        DefineFunction("mc-check-result", FileSystem.McCheckResult);
     }
     
     // =======================================================================
