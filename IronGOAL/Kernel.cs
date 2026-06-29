@@ -68,6 +68,7 @@ public class Kernel
         GameMemory.Install(EventBus);
         DebugSystem.Install(EventBus);
         DebugSystem.Configure(config.EnableDebugChannel);
+        AssetSystem.Install(EventBus);
         RegisterAll();
         
         _log(GoalLogSeverity.Info, GoalErrorCode.None, "Kernel booted successfully.");
@@ -305,6 +306,16 @@ public class Kernel
         DefineFunction("print", DebugSystem.Print);
         DefineFunction("inspect", DebugSystem.Inspect);
         DefineFunction("_format", DebugSystem.Format);
+        
+        // ===================================================================
+        // ASSET SYSTEM
+        // ===================================================================
+        
+        DefineFunction("load", AssetSystem.Load);
+        DefineFunction("loado", AssetSystem.LoadObject);
+        DefineFunction("loadb", AssetSystem.LoadBinary);
+        DefineFunction("dgo-load", AssetSystem.DgoLoad);
+        DefineFunction("unload", AssetSystem.Unload);
     }
     
     // =======================================================================
