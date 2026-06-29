@@ -188,6 +188,9 @@ public class Kernel
         var closure = Closure.Create(target, -1);
         $"(define {schemeName} {{0}})".Eval(closure);
     }
+    
+    // Handle unimplemented GOAL functions.
+    public static object RunUnimplemented(object[] args) => "#f".Eval();
 
     /// <summary>
     /// Register all GOAL functions with the Scheme interpreter.
@@ -338,6 +341,39 @@ public class Kernel
         // ===================================================================
         
         DefineFunction("sql-query", DatabaseSystem.SqlQuery);
+        
+        // ===================================================================
+        // UNIMPLEMENTED FUNCTIONS
+        // ===================================================================
+        
+        // Linker / Object File
+        DefineFunction("link",         RunUnimplemented);
+        DefineFunction("link-busy?",   RunUnimplemented);
+        DefineFunction("link-reset",   RunUnimplemented);
+        DefineFunction("link-begin",   RunUnimplemented);
+        DefineFunction("link-resume",  RunUnimplemented);
+
+        // C-Kernel Internal
+        DefineFunction("ultimate-memcpy", RunUnimplemented);
+        DefineFunction("symlink2",        RunUnimplemented);
+        DefineFunction("symlink3",        RunUnimplemented);
+
+        // PS2 IOP RPC
+        DefineFunction("rpc-call",  RunUnimplemented);
+        DefineFunction("rpc-busy?", RunUnimplemented);
+
+        // PS2 System Config
+        DefineFunction("scf-get-language",         RunUnimplemented);
+        DefineFunction("scf-get-aspect",           RunUnimplemented);
+        DefineFunction("scf-get-volume",           RunUnimplemented);
+        DefineFunction("scf-get-territory",        RunUnimplemented);
+        DefineFunction("scf-get-timeout",          RunUnimplemented);
+        DefineFunction("scf-get-inactive-timeout", RunUnimplemented);
+        DefineFunction("scf-get-time",             RunUnimplemented);
+
+        // Memory Card Language
+        DefineFunction("mc-set-language", RunUnimplemented);
+        DefineFunction("kset-language",   RunUnimplemented);
     }
     
     // =======================================================================
