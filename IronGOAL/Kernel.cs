@@ -70,6 +70,7 @@ public class Kernel
         DebugSystem.Configure(config.EnableDebugChannel);
         AssetSystem.Install(EventBus);
         FileSystem.Install(EventBus);
+        DatabaseSystem.Configure(config.SqlQueryHandler);
         RegisterAll();
         
         _log(GoalLogSeverity.Info, GoalErrorCode.None, "Kernel booted successfully.");
@@ -331,6 +332,12 @@ public class Kernel
         DefineFunction("mc-makefile", FileSystem.McMakeFile);
         DefineFunction("mc-get-status", FileSystem.McGetStatus);
         DefineFunction("mc-check-result", FileSystem.McCheckResult);
+        
+        // ===================================================================
+        // DATABASE SYSTEM
+        // ===================================================================
+        
+        DefineFunction("sql-query", DatabaseSystem.SqlQuery);
     }
     
     // =======================================================================

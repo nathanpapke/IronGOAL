@@ -1,3 +1,5 @@
+using IronGOAL.Backing;
+
 namespace IronGOAL;
 
 public sealed class GoalRuntimeConfig
@@ -85,4 +87,26 @@ public sealed class GoalRuntimeConfig
     /// the host program before constructing this <c>Host</c>.
     /// </summary>
     public object? SchemeEnvironment { get; init; } = null;
+    
+    // =======================================================================
+    // DATABASE SYSTEM
+    // =======================================================================
+
+    /// <summary>
+    /// Host-provided handler for <c>(sql-query ...)</c> calls from scripts.
+    /// <para>
+    /// The delegate receives the raw SQL string and must return a
+    /// <c>string[]</c> where <c>[0]</c> is the content-type name (a symbol
+    /// name such as <c>"race-info"</c>) and <c>[1..N]</c> are the flat
+    /// field-value strings - mirroring the layout of GOAL's <c>sql-result</c>
+    /// type from Jak X.  Return <c>null</c> to signal query failure;
+    /// <c>sql-query</c> will return <c>#f</c> to the script.
+    /// </para>
+    /// <para>
+    /// When <c>null</c> (default), all <c>sql-query</c> calls return
+    /// <c>#f</c> immediately, matching <c>sqlpipe-query</c>'s behavior when
+    /// the named-pipe files are absent.
+    /// </para>
+    /// </summary>
+    public DatabaseSystem.SqlQueryDelegate? SqlQueryHandler { get; init; } = null;
 }
