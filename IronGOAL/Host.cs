@@ -281,12 +281,16 @@ public sealed class Host : IDisposable
     // CHANNEL READERS
     // =======================================================================
     
-    public ChannelReader<RenderCommand>              RenderCommands => _kernel.EventBus.RenderCommands;
-    public ChannelReader<AudioCommand>               AudioCommands  => _kernel.EventBus.AudioCommands;
-    public ChannelReader<GameEvent>                  GameEvents     => _kernel.EventBus.GameEvents;
-    public ChannelReader<PhysicsCommand>             PhysicsCommands => _kernel.EventBus.PhysicsCommands;
-    public ChannelReader<Timestamped<DebugCommand>>  DebugCommands  => _kernel.EventBus.DebugCommands;
-    public ChannelReader<MemoryEvent>                MemoryEvents   => _kernel.EventBus.MemoryEvents;
+    public ChannelReader<TransformCommand>
+        TransformCommands  => _kernel.EventBus.TransformCommands;
+    public ChannelReader<AudioCommand>
+        AudioCommands      => _kernel.EventBus.AudioCommands;
+    public ChannelReader<GameEvent>
+        GameEvents         => _kernel.EventBus.GameEvents;
+    public ChannelReader<Timestamped<DebugCommand>>
+        DebugCommands      => _kernel.EventBus.DebugCommands;
+    public ChannelReader<MemoryEvent>
+        MemoryEvents       => _kernel.EventBus.MemoryEvents;
     
     // =======================================================================
     // DISPOSAL
@@ -331,13 +335,9 @@ public sealed class Host : IDisposable
             return GoalResult.Fail(GoalErrorCode.InvalidConfig,
                 "StackHeapSize must be smaller than GlobalHeapSize.");
         
-        if (config.RenderChannelCapacity <= 0)
+        if (config.TransformChannelCapacity <= 0)
             return GoalResult.Fail(GoalErrorCode.InvalidConfig,
                 "RenderChannelCapacity must be > 0.");
-        
-        if (config.PhysicsChannelCapacity <= 0)
-            return GoalResult.Fail(GoalErrorCode.InvalidConfig,
-                "PhysicsChannelCapacity must be > 0.");
         
         if (config.LogHandler is null)
             return GoalResult.Fail(GoalErrorCode.InvalidConfig,

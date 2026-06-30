@@ -102,14 +102,25 @@ public class EntitySystem
             Param3   = param3,
         });
     
-    private static void PublishRender(RenderCommandType type, int entityId,
-        Matrix4x4 transform = default)
-        => _bus?.PublishRender(new RenderCommand
+    private static void PublishTransform(int entityId, Matrix4x4 transform = default)
+    {
+        if (_bus is not EventBus bus) return;
+        
+        var cmd = new TransformCommand { EntityId = entityId, Transform = transform };
+        
+        if (bus.PublishTransform(cmd)) return;          // fast path: channel had room
+        
+        ScriptProcess? proc = ProcessScheduler.CurrentProcess;
+        if (proc is null)
         {
-            Type      = type,
-            EntityId  = entityId,
-            Transform = transform,
-        });
+            EventBus.RecordTransformDrop();              // no context: drop and count
+            return;
+        }
+        
+        proc.SetPredicate(() => bus.PublishTransform(cmd));
+        proc.YieldToScheduler();
+        proc.ClearPredicate();
+    }
     
     private static int Pack(float f) => BitConverter.SingleToInt32Bits(f);
     
@@ -241,8 +252,7 @@ public class EntitySystem
         if (args.Length < 2 || args[0] is not long handle || args[1] is not Vector3 pos)
             return "#f".Eval();
         
-        PublishRender(RenderCommandType.SetTransform, (int)handle,
-            Matrix4x4.CreateTranslation(pos));
+        PublishTransform((int)handle, Matrix4x4.CreateTranslation(pos));
         return "#t".Eval();
     }
     
@@ -270,8 +280,7 @@ public class EntitySystem
         if (args.Length < 2 || args[0] is not long handle || args[1] is not Quaternion rot)
             return "#f".Eval();
         
-        PublishRender(RenderCommandType.SetTransform, (int)handle,
-            Matrix4x4.CreateFromQuaternion(rot));
+        PublishTransform((int)handle, Matrix4x4.CreateFromQuaternion(rot));
         return "#t".Eval();
     }
     
@@ -299,8 +308,7 @@ public class EntitySystem
         if (args.Length < 2 || args[0] is not long handle || args[1] is not Vector3 scale)
             return "#f".Eval();
  
-        PublishRender(RenderCommandType.SetTransform, (int)handle,
-            Matrix4x4.CreateScale(scale));
+        PublishTransform((int)handle, Matrix4x4.CreateScale(scale));
         return "#t".Eval();
     }
     

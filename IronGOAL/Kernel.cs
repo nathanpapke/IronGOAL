@@ -39,10 +39,9 @@ public class Kernel
         // Build channels first so kernel backing can reference the bus
         // during registration without any ordering dependency.
         EventBus = new EventBus(
-            config.RenderChannelCapacity,
+            config.TransformChannelCapacity,
             config.AudioChannelCapacity,
             config.GameEventChannelCapacity,
-            physicsCapacity: config.PhysicsChannelCapacity,
             debugCapacity: config.DebugChannelCapacity,
             memoryCapacity: config.MemoryChannelCapacity);
         
@@ -60,11 +59,7 @@ public class Kernel
         // Register all C# kernel functions as Scheme symbols.
         ProcessRuntime.Install(_scheduler);
         EntitySystem.Install(EventBus);
-        AnimationSystem.Install(EventBus);
         AudioSystem.Install(EventBus);
-        InputSystem.Install(EventBus);
-        GraphicsSystem.Install(EventBus);
-        PhysicsSystem.Install(EventBus);
         GameMemory.Install(EventBus);
         DebugSystem.Install(EventBus);
         DebugSystem.Configure(config.EnableDebugChannel);

@@ -14,4 +14,8 @@
         <InternalsVisibleTo Include="Tests" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Remove="Backing\AnimationSystem.cs" />
+    </ItemGroup>
+
 </Project>

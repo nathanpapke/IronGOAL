@@ -5,7 +5,7 @@ var config = new GoalRuntimeConfig
 {
     GlobalHeapSize        = 16 * 1024 * 1024,
     StackHeapSize         =  2 * 1024 * 1024,
-    RenderChannelCapacity = 64,
+    TransformChannelCapacity = 64,
     EnableMemoryTracking  = false,
     EnableDebugChannel    = false,
     LogHandler            = (sev, code, msg) => Console.WriteLine($"[{sev}] {code}: {msg}")

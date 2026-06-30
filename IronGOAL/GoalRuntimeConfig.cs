@@ -47,14 +47,10 @@ public sealed class GoalRuntimeConfig
     // =======================================================================
     // Exposed here so the host can tune for its own frame budget without
     // recompiling the library. The defaults match the EventBus spec.
-    // PhysicsChannelCapacity is sized at 512 - smaller than render (4096)
-    // because physics commands are coarser-grained (one ApplyForce per
-    // entity per frame is typical, not one per draw call).
     
-    public int RenderChannelCapacity    { get; init; } = 4096;
+    public int TransformChannelCapacity { get; init; } = 4096;
     public int AudioChannelCapacity     { get; init; } = 1024;
     public int GameEventChannelCapacity { get; init; } = 512;
-    public int PhysicsChannelCapacity   { get; init; } = 512;
     public int DebugChannelCapacity     { get; init; } = 256;
     public int MemoryChannelCapacity    { get; init; } = 128;
     

@@ -11,10 +11,9 @@ public sealed class EventBus
     // Only the writer end is used inside this class; the reader end is
     // returned through the public properties below.
     
-    private readonly Channel<RenderCommand>              _renderChannel;
+    private readonly Channel<TransformCommand>           _transformChannel;
     private readonly Channel<AudioCommand>               _audioChannel;
     private readonly Channel<GameEvent>                  _gameEventChannel;
-    private readonly Channel<PhysicsCommand>             _physicsChannel;
     private readonly Channel<Timestamped<DebugCommand>>  _debugChannel;
     private readonly Channel<MemoryEvent>                _memoryChannel;
     
@@ -32,27 +31,20 @@ public sealed class EventBus
     // backpressure diagnostics without polling the channels themselves.
     // Counters are monotonically increasing and never reset.
     
-    private static long _renderDropCount;
-    private static long _physicsDropCount;
+    private static long _transformDropCount;
     private static long _memoryDropCount;
     
     /// <summary>
-    /// Total render commands dropped because the publish call had no
+    /// Total transform commands dropped because the publish call had no
     /// ScriptProcess context.  Monotonically increasing; never resets.
     /// </summary>
-    public static long RenderDropCount  => Interlocked.Read(ref _renderDropCount);
+    public static long TransformDropCount  => Interlocked.Read(ref _transformDropCount);
     
     /// <summary>
     /// Total memory events dropped because the publish call had no
     /// ScriptProcess context.  Monotonically increasing; never resets.
     /// </summary>
     public static long MemoryDropCount  => Interlocked.Read(ref _memoryDropCount);
-    
-    /// <summary>
-    /// Total physics commands dropped because the publish call had no
-    /// ScriptProcess context.  Monotonically increasing; never resets.
-    /// </summary>
-    public static long PhysicsDropCount => Interlocked.Read(ref _physicsDropCount);
     
     // =======================================================================
     // CONSTRUCTION
@@ -62,10 +54,9 @@ public sealed class EventBus
     // The defaults here match the architectural spec.
     
     public EventBus(
-        int renderCapacity    = 4096,
+        int transformCapacity = 4096,
         int audioCapacity     = 1024,
         int gameEventCapacity = 512,
-        int physicsCapacity   = 512,
         int debugCapacity     = 256,
         int memoryCapacity    = 128)
     {
@@ -78,8 +69,8 @@ public sealed class EventBus
         // on which render data is lost.
         // SingleReader = false because some engines drain the render channel
         // from a dedicated render thread separate from the main thread.
-        _renderChannel = Channel.CreateBounded<RenderCommand>(
-            new BoundedChannelOptions(renderCapacity)
+        _transformChannel = Channel.CreateBounded<TransformCommand>(
+            new BoundedChannelOptions(transformCapacity)
             {
                 FullMode     = BoundedChannelFullMode.Wait,
                 SingleWriter = true,
@@ -107,22 +98,6 @@ public sealed class EventBus
             new BoundedChannelOptions(gameEventCapacity)
             {
                 FullMode     = BoundedChannelFullMode.DropNewest,
-                SingleWriter = true,
-                SingleReader = true,
-            });
-        
-        // Physics - Wait on full.
-        // Physics commands (ApplyForce, SetVelocity, etc.) must not be
-        // dropped - a missed command desyncs simulation state permanently.
-        // When the channel is full, the calling ScriptProcess is suspended
-        // until the host drains it - no .NET thread is ever blocked.
-        // A publish call with no process context increments PhysicsDropCount
-        // and returns immediately.
-        // SingleReader = true; physics is drained on the simulation thread.
-        _physicsChannel = Channel.CreateBounded<PhysicsCommand>(
-            new BoundedChannelOptions(physicsCapacity)
-            {
-                FullMode     = BoundedChannelFullMode.Wait,
                 SingleWriter = true,
                 SingleReader = true,
             });
@@ -157,10 +132,9 @@ public sealed class EventBus
     // PUBLIC READ SURFACE (forwarded through GoalRuntime to the host)
     // =======================================================================
 
-    public ChannelReader<RenderCommand>             RenderCommands => _renderChannel.Reader;
+    public ChannelReader<TransformCommand>          TransformCommands => _transformChannel.Reader;
     public ChannelReader<AudioCommand>              AudioCommands  => _audioChannel.Reader;
     public ChannelReader<GameEvent>                 GameEvents     => _gameEventChannel.Reader;
-    public ChannelReader<PhysicsCommand>            PhysicsCommands => _physicsChannel.Reader;
     public ChannelReader<Timestamped<DebugCommand>> DebugCommands  => _debugChannel.Reader;
     public ChannelReader<MemoryEvent>               MemoryEvents   => _memoryChannel.Reader;
     
@@ -190,23 +164,14 @@ public sealed class EventBus
     /// Callers must retry via process suspension - see wrapper in
     /// <c>GraphicsSystem</c>.
     /// </summary>
-    internal bool PublishRender(RenderCommand cmd) =>
-        _renderChannel.Writer.TryWrite(cmd);
+    internal bool PublishTransform(TransformCommand cmd) =>
+        _transformChannel.Writer.TryWrite(cmd);
     
     internal void PublishAudio(AudioCommand cmd) =>
         _audioChannel.Writer.TryWrite(cmd);
     
     internal void PublishGameEvent(GameEvent evt) =>
         _gameEventChannel.Writer.TryWrite(evt);
-    
-    /// <summary>
-    /// Single non-blocking enqueue attempt.  Returns <c>true</c> if
-    /// accepted, <c>false</c> if the channel is currently full.
-    /// Callers must retry via process suspension - see wrapper in
-    /// <c>PhysicsSystem</c>.
-    /// </summary>
-    internal bool PublishPhysics(PhysicsCommand cmd) =>
-        _physicsChannel.Writer.TryWrite(cmd);
     
     internal void PublishDebug(DebugCommand cmd, long frameId, float gameTime) =>
         _debugChannel.Writer.TryWrite(new Timestamped<DebugCommand>
@@ -232,9 +197,8 @@ public sealed class EventBus
     // no ScriptProcess context is present to suspend. Records the drop so
     // the host can observe it via the public drop-count properties above.
     
-    internal static void RecordRenderDrop()  => Interlocked.Increment(ref _renderDropCount);
-    internal static void RecordMemoryDrop()  => Interlocked.Increment(ref _memoryDropCount);
-    internal static void RecordPhysicsDrop() => Interlocked.Increment(ref _physicsDropCount);
+    internal static void RecordTransformDrop()   => Interlocked.Increment(ref _transformDropCount);
+    internal static void RecordMemoryDrop()      => Interlocked.Increment(ref _memoryDropCount);
     
     // =======================================================================
     // SHUTDOWN
@@ -245,10 +209,9 @@ public sealed class EventBus
     
     internal void Complete()
     {
-        _renderChannel.Writer.TryComplete();
+        _transformChannel.Writer.TryComplete();
         _audioChannel.Writer.TryComplete();
         _gameEventChannel.Writer.TryComplete();
-        _physicsChannel.Writer.TryComplete();
         _debugChannel.Writer.TryComplete();
         _memoryChannel.Writer.TryComplete();
     }

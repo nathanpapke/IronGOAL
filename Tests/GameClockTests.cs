@@ -13,7 +13,7 @@ public class GameClockTests
     {
         GlobalHeapSize        = 16 * 1024 * 1024,
         StackHeapSize         =  2 * 1024 * 1024,
-        RenderChannelCapacity = 64,
+        TransformChannelCapacity = 64,
         EnableMemoryTracking  = false,
         EnableDebugChannel    = false,
         LogHandler            = (_, _, _) => { }
