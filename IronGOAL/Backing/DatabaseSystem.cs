@@ -50,7 +50,7 @@ public static class DatabaseSystem
     /// where <c>content-type-symbol</c> is the interned Scheme symbol
     /// matching the host's <c>result[0]</c> string, and <c>"val0".."valN"</c>
     /// are the remaining host strings verbatim.  An empty result set is
-    /// returned as <c>#(error)</c> — matching GOAL's initial
+    /// returned as <c>#(error)</c> - matching GOAL's initial
     /// <c>content-type = 'error</c> when the host returns a zero-length
     /// payload.
     /// </para>
@@ -117,7 +117,7 @@ public static class DatabaseSystem
     /// Mirrors GOAL's <c>sql-result::print</c> layout: <c>#(content-type val0 val1 ...)</c>.
     /// <para>
     /// Constructed entirely via <c>.Eval()</c> on IronScheme built-ins
-    /// (<c>make-vector</c>, <c>vector-set!</c>, <c>string->symbol</c>) —
+    /// (<c>make-vector</c>, <c>vector-set!</c>, <c>string->symbol</c>) -
     /// no IronScheme internal APIs are used.
     /// </para>
     /// </summary>

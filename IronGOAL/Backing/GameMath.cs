@@ -323,7 +323,7 @@ public static class GameMath
     
     /// <summary>
     /// Constructs a quaternion from Euler angles in degrees (pitch, yaw, roll
-    /// applied in that order — matches GOAL's convention).
+    /// applied in that order - matches GOAL's convention).
     /// Scheme: <c>(quat-from-euler pitch yaw roll)</c>
     /// </summary>
     public static object QuatFromEuler(object[] args)
@@ -1023,7 +1023,7 @@ public static class GameMath
     
     /// <summary>
     /// Returns a uniformly distributed random point on the surface of a sphere
-    /// of the given radius (Marsaglia method — avoids trig calls).
+    /// of the given radius (Marsaglia method - avoids trig calls).
     /// Scheme: <c>(random-on-sphere radius)</c>
     /// </summary>
     public static object RandomOnSphere(object[] args)

@@ -21,20 +21,6 @@ public class FileSystem
     /// </summary>
     public static void Install(EventBus bus) => _bus = bus;
     
-    // TODO: Plan all project OpCodes.
-    // FileSystem is assigned the 1000–1099 range (provisional).
-    // A full inventory pass across all backing classes is required before
-    // these are locked.
-    
-    private const int OpMcFormat     = 1000; // command; fire-and-return
-    private const int OpMcUnformat   = 1001; // command; fire-and-return
-    private const int OpMcCreateFile = 1002; // command; fire-and-return
-    private const int OpMcMakeFile   = 1003; // command; fire-and-return
-    private const int OpMcRun        = 1010; // query; suspends until host completes pending op
-    private const int OpMcSave       = 1011; // command; enqueues SAVE; fire-and-return
-    private const int OpMcLoad       = 1012; // command; enqueues LOAD; fire-and-return
-    private const int OpMcGetStatus  = 1020; // query; suspends until host deposits slot info
-    
     // =======================================================================
     // PENDING OPERATION STATE
     // =======================================================================
@@ -69,7 +55,7 @@ public class FileSystem
     // QUERY RESPONSE TABLE
     // =======================================================================
     
-    // Standard suspend/wake table — identical pattern to GameMemory,
+    // Standard suspend/wake table - identical pattern to GameMemory,
     // PhysicsSystem, AnimationSystem, EntitySystem, etc.
     // Key   = process handle of the suspended ScriptProcess.
     // Value = the answer the host deposited via DeliverQueryResponse.
@@ -89,12 +75,12 @@ public class FileSystem
     // INTERNAL HELPERS
     // =======================================================================
     
-    private static void PublishCommand(int opcode, int param1 = 0, int param2 = 0)
+    private static void PublishCommand(Opcode op, int param1 = 0, int param2 = 0)
         => _bus?.PublishGameEvent(new GameEvent
         {
             Type     = GameEventType.EntitySetState,
             EntityId = -1,
-            Param0   = opcode,
+            Param0   = (int)op,
             Param1   = param1,
             Param2   = param2,
             Param3   = 0,
@@ -106,13 +92,13 @@ public class FileSystem
     /// <see cref="DeliverQueryResponse"/>.  Returns the deposited value, or
     /// <c>null</c> if called outside a <see cref="ScriptProcess"/>.
     /// </summary>
-    private static object? Query(int opcode, int param1 = 0, int param2 = 0)
+    private static object? Query(Opcode op, int param1 = 0, int param2 = 0)
     {
         ScriptProcess? proc = ProcessScheduler.CurrentProcess;
         if (proc is null)
         {
             Console.Error.WriteLine(
-                "[FileSystem] Query called outside a running process — returning null.");
+                "[FileSystem] Query called outside a running process - returning null.");
             return null;
         }
         
@@ -122,7 +108,7 @@ public class FileSystem
         {
             Type     = GameEventType.EntityQuery,
             EntityId = -1,
-            Param0   = opcode,
+            Param0   = (int)op,
             Param1   = param1,
             Param2   = param2,
             Param3   = (int)(handle & 0x7FFF_FFFF),
@@ -180,12 +166,12 @@ public class FileSystem
         {
             // NO_OP path - notify host and return without suspending, matching
             // GOAL's MC_run behaviour when op.operation == NO_OP.
-            PublishCommand(OpMcRun);
+            PublishCommand(Opcode.McRun);
             return "#t".Eval();
         }
         
         // Suspend until host completes the operation and deposits result code.
-        object? result = Query(OpMcRun, cardIdx, fileIdx);
+        object? result = Query(Opcode.McRun, cardIdx, fileIdx);
         
         // Store the result for mc-check-result.
         if (result is long rl)
@@ -207,7 +193,7 @@ public class FileSystem
     public static object McFormat(object[] args)
     {
         int cardIdx = args.Length >= 1 ? AsInt(args[0]) : 0;
-        PublishCommand(OpMcFormat, cardIdx);
+        PublishCommand(Opcode.McFormat, cardIdx);
         return "#t".Eval();
     }
     
@@ -220,7 +206,7 @@ public class FileSystem
     public static object McUnformat(object[] args)
     {
         int cardIdx = args.Length >= 1 ? AsInt(args[0]) : 0;
-        PublishCommand(OpMcUnformat, cardIdx);
+        PublishCommand(Opcode.McUnformat, cardIdx);
         return "#t".Eval();
     }
     
@@ -235,8 +221,8 @@ public class FileSystem
     public static object McCreateFile(object[] args)
     {
         int param = args.Length >= 1 ? AsInt(args[0]) : 0;
-        // args[1] = data ptr — ignored.
-        PublishCommand(OpMcCreateFile, param);
+        // args[1] = data ptr - ignored.
+        PublishCommand(Opcode.McCreateFile, param);
         return "#t".Eval();
     }
     
@@ -254,16 +240,16 @@ public class FileSystem
     {
         int cardIdx = args.Length >= 1 ? AsInt(args[0]) : 0;
         int fileIdx = args.Length >= 2 ? AsInt(args[1]) : 0;
-        // args[2] = save-data ptr, args[3] = save-summary-data ptr — both ignored.
+        // args[2] = save-data ptr, args[3] = save-summary-data ptr - both ignored.
         
         lock (_pendingLock)
         {
-            _pendingOpcode  = OpMcSave;
+            _pendingOpcode  = (int)Opcode.McSave;
             _pendingCardIdx = cardIdx;
             _pendingFileIdx = fileIdx;
         }
         
-        PublishCommand(OpMcSave, cardIdx, fileIdx);
+        PublishCommand(Opcode.McSave, cardIdx, fileIdx);
         return "#t".Eval();
     }
     
@@ -284,12 +270,12 @@ public class FileSystem
         
         lock (_pendingLock)
         {
-            _pendingOpcode  = OpMcLoad;
+            _pendingOpcode  = (int)Opcode.McLoad;
             _pendingCardIdx = cardIdx;
             _pendingFileIdx = fileIdx;
         }
         
-        PublishCommand(OpMcLoad, cardIdx, fileIdx);
+        PublishCommand(Opcode.McLoad, cardIdx, fileIdx);
         return "#t".Eval();
     }
     
@@ -305,7 +291,7 @@ public class FileSystem
     {
         int port = args.Length >= 1 ? AsInt(args[0]) : 0;
         int size = args.Length >= 2 ? AsInt(args[1]) : 0;
-        PublishCommand(OpMcMakeFile, port, size);
+        PublishCommand(Opcode.McMakeFile, port, size);
         return "#t".Eval();
     }
     
@@ -315,7 +301,7 @@ public class FileSystem
     /// of the form <c>(handle known formatted initiated last-file)</c>
     /// matching the fields of GOAL's <c>mc_slot_info</c> struct, or
     /// <c>#f</c> if no status is available.  The <c>info</c> pointer
-    /// argument is a PS2-era output struct; it is accepted but ignored —
+    /// argument is a PS2-era output struct; it is accepted but ignored -
     /// the host populates its own representation.
     ///
     /// <para>Scheme: <c>(mc-get-status slot info)</c></para>
@@ -323,9 +309,9 @@ public class FileSystem
     public static object McGetStatus(object[] args)
     {
         int slot = args.Length >= 1 ? AsInt(args[0]) : 0;
-        // args[1] = info ptr — ignored.
+        // args[1] = info ptr - ignored.
         
-        object? result = Query(OpMcGetStatus, slot);
+        object? result = Query(Opcode.McGetStatus, slot);
         return result ?? "#f".Eval();
     }
     

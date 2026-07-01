@@ -29,7 +29,7 @@ public static class AudioSystem
     // HANDLE COUNTER
     // =======================================================================
     
-    // Locally-issued handle counter.  The host maps these ids to its own
+    // Locally issued handle counter.  The host maps these ids to its own
     // engine resources.  Starts at 1 so that 0 can serve as a sentinel
     // "no handle" value on the host side if needed.
     //
@@ -60,9 +60,6 @@ public static class AudioSystem
     internal static void DeliverQueryResponse(long processHandle, object? value)
         => _queryResponses[processHandle] = value;
     
-    //TODO: Finalize opcodes.
-    private const int QDialogIsPlaying = 210;
-    
     // =======================================================================
     // INTERNAL HELPERS
     // =======================================================================
@@ -83,7 +80,7 @@ public static class AudioSystem
     /// <c>Param3</c> is reserved for the process handle (stamped automatically).
     /// Returns <c>null</c> when called outside a process context.
     /// </summary>
-    private static object? Query(int param0, int param1 = 0)
+    private static object? Query(Opcode op, int param1 = 0)
     {
         ScriptProcess? proc = ProcessScheduler.CurrentProcess;
         if (proc is null)
@@ -99,7 +96,7 @@ public static class AudioSystem
         {
             Type     = GameEventType.EntityQuery,
             EntityId = -1,
-            Param0   = param0,
+            Param0   = (int)op,
             Param1   = param1,
             Param2   = 0,
             Param3   = (int)(handle & 0x7FFF_FFFF),
@@ -433,7 +430,7 @@ public static class AudioSystem
         if (args.Length == 0 || args[0] is not long handle)
             return "#f".Eval();
         
-        object? result = Query(QDialogIsPlaying, param1: (int)handle);
+        object? result = Query(Opcode.DialogIsPlaying, param1: (int)handle);
         return result is bool b ? b : "#f".Eval();
     }
 }

@@ -32,7 +32,7 @@ public class AudioSystemTests
     private static bool IsFalse(object? v) => v is bool b && !b;
     
     // =======================================================================
-    // PLAYBACK COMMANDS — sound-play
+    // PLAYBACK COMMANDS - sound-play
     // =======================================================================
     
     [Fact]
@@ -41,7 +41,7 @@ public class AudioSystemTests
         // Positional play: clip name + world position vec3.
         object? result = "(sound-play \"explosion\" (vec3 1.0 2.0 3.0))".Eval();
  
-        // Handle is issued locally (Option A) — expect a non-#f result.
+        // Handle is issued locally (Option A) - expect a non-#f result.
         Assert.False(IsFalse(result));
     }
     
@@ -55,7 +55,7 @@ public class AudioSystemTests
     [Fact]
     public void Play_MissingPosition_ReturnsFalse()
     {
-        // Clip name supplied but no position — guard fires.
+        // Clip name supplied but no position - guard fires.
         object result = AudioSystem.Play(new object[] { "explosion" });
         Assert.True(IsFalse(result));
     }
@@ -69,7 +69,7 @@ public class AudioSystemTests
     }
     
     // =======================================================================
-    // PLAYBACK COMMANDS — sound-play-2d
+    // PLAYBACK COMMANDS - sound-play-2d
     // =======================================================================
     
     [Fact]
@@ -95,7 +95,7 @@ public class AudioSystemTests
     }
     
     // =======================================================================
-    // PLAYBACK COMMANDS — sound-stop
+    // PLAYBACK COMMANDS - sound-stop
     // =======================================================================
     
     [Fact]
@@ -122,7 +122,7 @@ public class AudioSystemTests
     }
     
     // =======================================================================
-    // PLAYBACK COMMANDS — sound-stop-all
+    // PLAYBACK COMMANDS - sound-stop-all
     // =======================================================================
     
     [Fact]
@@ -141,7 +141,7 @@ public class AudioSystemTests
     }
     
     // =======================================================================
-    // PARAMETERS — sound-set-volume!
+    // PARAMETERS - sound-set-volume!
     // =======================================================================
     
     [Fact]
@@ -161,7 +161,7 @@ public class AudioSystemTests
     [Fact]
     public void SetVolume_MissingVolume_ReturnsFalse()
     {
-        // Handle supplied but no volume value — guard fires.
+        // Handle supplied but no volume value - guard fires.
         object result = AudioSystem.SetVolume(new object[] { 1L });
         Assert.True(IsFalse(result));
     }
@@ -175,7 +175,7 @@ public class AudioSystemTests
     }
     
     // =======================================================================
-    // PARAMETERS — sound-set-pitch!
+    // PARAMETERS - sound-set-pitch!
     // =======================================================================
     
     [Fact]
@@ -207,7 +207,7 @@ public class AudioSystemTests
     }
     
     // =======================================================================
-    // PARAMETERS — sound-set-param!
+    // PARAMETERS - sound-set-param!
     // =======================================================================
     
     [Fact]
@@ -228,7 +228,7 @@ public class AudioSystemTests
     [Fact]
     public void SetParam_MissingValue_ReturnsFalse()
     {
-        // Handle and param name supplied but no value — guard fires.
+        // Handle and param name supplied but no value - guard fires.
         object result = AudioSystem.SetParam(new object[] { 1L, "engine-rpm" });
         Assert.True(IsFalse(result));
     }
@@ -242,7 +242,7 @@ public class AudioSystemTests
     }
     
     // =======================================================================
-    // MUSIC — music-play
+    // MUSIC - music-play
     // =======================================================================
     
     [Fact]
@@ -268,7 +268,7 @@ public class AudioSystemTests
     }
     
     // =======================================================================
-    // MUSIC — music-stop
+    // MUSIC - music-stop
     // =======================================================================
     
     [Fact]
@@ -295,7 +295,7 @@ public class AudioSystemTests
     }
     
     // =======================================================================
-    // MUSIC — music-set-intensity!
+    // MUSIC - music-set-intensity!
     // =======================================================================
     
     [Fact]
@@ -321,13 +321,13 @@ public class AudioSystemTests
     }
     
     // =======================================================================
-    // AMBIENT — set-listener-pos!
+    // AMBIENT - set-listener-pos!
     // =======================================================================
     
     [Fact]
     public void SetListenerPos_ValidArgs_ReturnsTrue()
     {
-        // position, forward, up — all vec3.
+        // position, forward, up - all vec3.
         object? result =
             "(set-listener-pos! (vec3 0.0 0.0 0.0) (vec3 0.0 0.0 1.0) (vec3 0.0 1.0 0.0))"
             .Eval();
@@ -344,7 +344,7 @@ public class AudioSystemTests
     [Fact]
     public void SetListenerPos_MissingUpVector_ReturnsFalse()
     {
-        // Position and forward supplied but up vector absent — guard fires.
+        // Position and forward supplied but up vector absent - guard fires.
         var pos     = "(vec3 0.0 0.0 0.0)".Eval()!;
         var forward = "(vec3 0.0 0.0 1.0)".Eval()!;
  
@@ -362,7 +362,7 @@ public class AudioSystemTests
     }
     
     // =======================================================================
-    // AMBIENT — set-reverb!
+    // AMBIENT - set-reverb!
     // =======================================================================
     
     [Fact]
@@ -396,7 +396,7 @@ public class AudioSystemTests
     }
     
     // =======================================================================
-    // VOICE / DIALOG — dialog-play
+    // VOICE / DIALOG - dialog-play
     // =======================================================================
     
     [Fact]
@@ -430,7 +430,7 @@ public class AudioSystemTests
     }
     
     // =======================================================================
-    // VOICE / DIALOG — dialog-playing? (opcode 210, EntityQuery)
+    // VOICE / DIALOG - dialog-playing? (opcode 210, EntityQuery)
     // =======================================================================
     
     [Fact]

@@ -193,7 +193,7 @@ public sealed class ProcessScheduler : IDisposable
         if (CurrentProcess is not { } proc)
         {
             Console.Error.WriteLine(
-                "[ProcessScheduler] (suspend) called outside a running process — ignored.");
+                "[ProcessScheduler] (suspend) called outside a running process - ignored.");
             return;
         }
         proc.YieldToScheduler();
@@ -207,7 +207,7 @@ public sealed class ProcessScheduler : IDisposable
         if (CurrentProcess is not { } proc)
         {
             Console.Error.WriteLine(
-                "[ProcessScheduler] (suspend-for-frames) called outside a running process — ignored.");
+                "[ProcessScheduler] (suspend-for-frames) called outside a running process - ignored.");
             return;
         }
         proc.SetFrameDelay(frames);
@@ -224,7 +224,7 @@ public sealed class ProcessScheduler : IDisposable
         if (CurrentProcess is not { } proc)
         {
             Console.Error.WriteLine(
-                "[ProcessScheduler] (suspend-until) called outside a running process — ignored.");
+                "[ProcessScheduler] (suspend-until) called outside a running process - ignored.");
             return;
         }
         
@@ -259,7 +259,7 @@ public sealed class ProcessScheduler : IDisposable
         {
             Console.Error.WriteLine(
                 $"[ProcessScheduler] (run-function-in-process) target == caller ({callerHandle})" +
-                " — self-call would deadlock; returning #f.");
+                " - self-call would deadlock; returning #f.");
             return false;
         }
         
@@ -291,7 +291,7 @@ public sealed class ProcessScheduler : IDisposable
         if (CurrentProcess is not { } proc)
         {
             Console.Error.WriteLine(
-                "[ProcessScheduler] WaitForCallResult called outside a running process — ignored.");
+                "[ProcessScheduler] WaitForCallResult called outside a running process - ignored.");
             return null;
         }
         
@@ -322,7 +322,7 @@ public sealed class ProcessScheduler : IDisposable
             target.Status == ProcessStatus.Dead)
         {
             Console.Error.WriteLine(
-                $"[ProcessScheduler] (set-to-run-function) target {targetHandle} not found or dead — ignored.");
+                $"[ProcessScheduler] (set-to-run-function) target {targetHandle} not found or dead - ignored.");
             return;
         }
         

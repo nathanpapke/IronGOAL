@@ -10,7 +10,7 @@ namespace IronGOAL.Backing;
 /// Equivalent to GOAL's time-related kernel functions and DC's timer utilities.
 ///
 /// All state is driven by the values the <see cref="ProcessScheduler"/> writes
-/// each frame — GameClock never reads wall-clock time directly.  The scheduler
+/// each frame - GameClock never reads wall-clock time directly.  The scheduler
 /// calls <see cref="Advance"/> once per <c>Kernel.Tick()</c> before any script
 /// code runs, keeping every read within a tick consistent.
 /// </summary>
@@ -223,7 +223,7 @@ public static class GameClock
     /// scaled seconds until canceled.  Returns an opaque timer handle.
     ///
     /// If the scheduler falls behind (e.g. a very long frame), only one
-    /// invocation fires per <c>Advance()</c> call — the timer reschedules
+    /// invocation fires per <c>Advance()</c> call - the timer reschedules
     /// relative to its last fire time, so it self-corrects without flooding.
     ///
     /// Scheme: <c>(timer-repeat interval-sec callback)</c>

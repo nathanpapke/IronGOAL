@@ -68,7 +68,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // VECTOR 3 — Vec3
+    // VECTOR 3 - Vec3
     // =====================================================================
     
     [Fact]
@@ -95,7 +95,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // VECTOR 3 — Vector3Add
+    // VECTOR 3 - Vector3Add
     // =====================================================================
     
     [Fact]
@@ -114,7 +114,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // VECTOR 3 — Vector3Subtract
+    // VECTOR 3 - Vector3Subtract
     // =====================================================================
     
     [Fact]
@@ -133,7 +133,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // VECTOR 3 — Vector3Scale
+    // VECTOR 3 - Vector3Scale
     // =====================================================================
  
     [Fact]
@@ -157,7 +157,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // VECTOR 3 — Vector3Dot
+    // VECTOR 3 - Vector3Dot
     // =====================================================================
  
     [Fact]
@@ -189,7 +189,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // VECTOR 3 — Vector3Cross
+    // VECTOR 3 - Vector3Cross
     // =====================================================================
  
     [Fact]
@@ -213,7 +213,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // VECTOR 3 — Vector3Length
+    // VECTOR 3 - Vector3Length
     // =====================================================================
  
     [Fact]
@@ -243,7 +243,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // VECTOR 3 — Vector3Normalize
+    // VECTOR 3 - Vector3Normalize
     // =====================================================================
  
     [Fact]
@@ -273,7 +273,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // VECTOR 3 — Vector3Distance
+    // VECTOR 3 - Vector3Distance
     // =====================================================================
  
     [Fact]
@@ -297,7 +297,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // VECTOR 3 — Vector3Lerp
+    // VECTOR 3 - Vector3Lerp
     // =====================================================================
  
     [Fact]
@@ -330,7 +330,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // VECTOR 4 — Vec4
+    // VECTOR 4 - Vec4
     // =====================================================================
  
     [Fact]
@@ -359,7 +359,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // QUATERNION — QuatIdentity
+    // QUATERNION - QuatIdentity
     // =====================================================================
  
     [Fact]
@@ -376,7 +376,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // QUATERNION — QuatFromAxisAngle
+    // QUATERNION - QuatFromAxisAngle
     // =====================================================================
  
     [Fact]
@@ -407,7 +407,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // QUATERNION — QuatFromEuler
+    // QUATERNION - QuatFromEuler
     // =====================================================================
  
     [Fact]
@@ -430,7 +430,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // QUATERNION — QuatMultiply
+    // QUATERNION - QuatMultiply
     // =====================================================================
  
     [Fact]
@@ -455,7 +455,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // QUATERNION — QuatSlerp
+    // QUATERNION - QuatSlerp
     // =====================================================================
  
     [Fact]
@@ -485,7 +485,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // QUATERNION — QuatToEuler
+    // QUATERNION - QuatToEuler
     // =====================================================================
  
     [Fact]
@@ -513,7 +513,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // QUATERNION — QuatRotateVec3
+    // QUATERNION - QuatRotateVec3
     // =====================================================================
  
     [Fact]
@@ -538,7 +538,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // MATRIX 4x4 — MatrixIdentity
+    // MATRIX 4x4 - MatrixIdentity
     // =====================================================================
  
     [Fact]
@@ -548,7 +548,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // MATRIX 4x4 — MatrixMultiply
+    // MATRIX 4x4 - MatrixMultiply
     // =====================================================================
  
     [Fact]
@@ -573,7 +573,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // MATRIX 4x4 — MatrixInverse
+    // MATRIX 4x4 - MatrixInverse
     // =====================================================================
  
     [Fact]
@@ -603,7 +603,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // MATRIX 4x4 — MatrixFromQuatTrans
+    // MATRIX 4x4 - MatrixFromQuatTrans
     // =====================================================================
  
     [Fact]
@@ -630,7 +630,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // MATRIX 4x4 — MatrixTransformPoint
+    // MATRIX 4x4 - MatrixTransformPoint
     // =====================================================================
  
     [Fact]
@@ -654,7 +654,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // MATRIX 4x4 — MatrixTransformDirection
+    // MATRIX 4x4 - MatrixTransformDirection
     // =====================================================================
  
     [Fact]
@@ -679,7 +679,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // MATRIX 4x4 — MatrixLookAt
+    // MATRIX 4x4 - MatrixLookAt
     // =====================================================================
  
     [Fact]
@@ -709,7 +709,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // MATRIX 4x4 — MatrixPerspective
+    // MATRIX 4x4 - MatrixPerspective
     // =====================================================================
  
     [Fact]
@@ -734,7 +734,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // TRANSFORM — TransformCreate
+    // TRANSFORM - TransformCreate
     // =====================================================================
  
     [Fact]
@@ -759,7 +759,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // TRANSFORM — TransformGetPosition
+    // TRANSFORM - TransformGetPosition
     // =====================================================================
  
     [Fact]
@@ -784,7 +784,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // TRANSFORM — TransformSetPosition
+    // TRANSFORM - TransformSetPosition
     // =====================================================================
  
     [Fact]
@@ -803,7 +803,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // TRANSFORM — TransformGetRotation
+    // TRANSFORM - TransformGetRotation
     // =====================================================================
  
     [Fact]
@@ -821,7 +821,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // TRANSFORM — TransformSetRotation
+    // TRANSFORM - TransformSetRotation
     // =====================================================================
  
     [Fact]
@@ -840,7 +840,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // TRANSFORM — TransformForward
+    // TRANSFORM - TransformForward
     // =====================================================================
  
     [Fact]
@@ -872,7 +872,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // TRANSFORM — TransformDestroy
+    // TRANSFORM - TransformDestroy
     // =====================================================================
  
     [Fact]
@@ -900,7 +900,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // GEOMETRY HELPERS — BBoxMake
+    // GEOMETRY HELPERS - BBoxMake
     // =====================================================================
  
     [Fact]
@@ -917,7 +917,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // GEOMETRY HELPERS — BBoxContains
+    // GEOMETRY HELPERS - BBoxContains
     // =====================================================================
  
     [Fact]
@@ -948,7 +948,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // GEOMETRY HELPERS — BBoxIntersects
+    // GEOMETRY HELPERS - BBoxIntersects
     // =====================================================================
  
     [Fact]
@@ -982,7 +982,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // GEOMETRY HELPERS — BBoxCenter
+    // GEOMETRY HELPERS - BBoxCenter
     // =====================================================================
  
     [Fact]
@@ -1006,7 +1006,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // INTERPOLATION / EASING — Lerp
+    // INTERPOLATION / EASING - Lerp
     // =====================================================================
  
     [Fact]
@@ -1034,7 +1034,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // INTERPOLATION / EASING — Clamp
+    // INTERPOLATION / EASING - Clamp
     // =====================================================================
  
     [Fact]
@@ -1062,7 +1062,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // INTERPOLATION / EASING — SmoothStep
+    // INTERPOLATION / EASING - SmoothStep
     // =====================================================================
  
     [Fact]
@@ -1090,7 +1090,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // INTERPOLATION / EASING — SmootherStep
+    // INTERPOLATION / EASING - SmootherStep
     // =====================================================================
  
     [Fact]
@@ -1118,7 +1118,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // INTERPOLATION / EASING — DegToRad
+    // INTERPOLATION / EASING - DegToRad
     // =====================================================================
  
     [Fact]
@@ -1146,7 +1146,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // INTERPOLATION / EASING — RadToDeg
+    // INTERPOLATION / EASING - RadToDeg
     // =====================================================================
  
     [Fact]
@@ -1176,7 +1176,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // INTERPOLATION / EASING — WrapAngle180
+    // INTERPOLATION / EASING - WrapAngle180
     // =====================================================================
  
     [Fact]
@@ -1210,7 +1210,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // INTERPOLATION / EASING — AngleDelta
+    // INTERPOLATION / EASING - AngleDelta
     // =====================================================================
  
     [Fact]
@@ -1239,7 +1239,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // UNIT CONVERSION — UnitsToMeters
+    // UNIT CONVERSION - UnitsToMeters
     // =====================================================================
  
     [Fact]
@@ -1261,7 +1261,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // UNIT CONVERSION — MetersToUnits
+    // UNIT CONVERSION - MetersToUnits
     // =====================================================================
  
     [Fact]
@@ -1285,7 +1285,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // RANDOM — RandomFloat
+    // RANDOM - RandomFloat
     // =====================================================================
  
     [Fact]
@@ -1305,7 +1305,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // RANDOM — RandomInt
+    // RANDOM - RandomInt
     // =====================================================================
  
     [Fact]
@@ -1332,7 +1332,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // RANDOM — RandomPointInSphere
+    // RANDOM - RandomPointInSphere
     // =====================================================================
  
     [Fact]
@@ -1353,7 +1353,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // RANDOM — RandomOnSphere
+    // RANDOM - RandomOnSphere
     // =====================================================================
  
     [Fact]
@@ -1375,7 +1375,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // SCALAR UTILITIES — Fabs
+    // SCALAR UTILITIES - Fabs
     // =====================================================================
  
     [Fact]
@@ -1403,7 +1403,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // SCALAR UTILITIES — Sqrtf
+    // SCALAR UTILITIES - Sqrtf
     // =====================================================================
  
     [Fact]
@@ -1415,7 +1415,7 @@ public class GameMathTests
     [Fact]
     public void Sqrtf_NegativeValue_ReturnsAbsoluteSquareRoot()
     {
-        // Impl: MathF.Sqrt(MathF.Abs(x)) — must not return NaN
+        // Impl: MathF.Sqrt(MathF.Abs(x)) - must not return NaN
         Assert.Equal(3f, Assert.IsType<float>(GameMath.Sqrtf(new object[] { F(-9f) })), 4);
     }
  
@@ -1432,7 +1432,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // SCALAR UTILITIES — FEqualEpsilon
+    // SCALAR UTILITIES - FEqualEpsilon
     // =====================================================================
  
     [Fact]
@@ -1460,7 +1460,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // SCALAR UTILITIES — SignedDiv0Guard
+    // SCALAR UTILITIES - SignedDiv0Guard
     // =====================================================================
  
     [Fact]
@@ -1495,7 +1495,7 @@ public class GameMathTests
     }
  
     // =====================================================================
-    // SCALAR UTILITIES — SignedMod0Guard
+    // SCALAR UTILITIES - SignedMod0Guard
     // =====================================================================
  
     [Fact]

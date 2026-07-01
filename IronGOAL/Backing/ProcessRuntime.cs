@@ -193,7 +193,7 @@ public static class ProcessRuntime
         {
             Console.Error.WriteLine(
                 "[ProcessRuntime] (run-function-in-process) called outside a running " +
-                "process — returning #f.");
+                "process - returning #f.");
             return "#f".Eval();
         }
         

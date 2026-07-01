@@ -24,7 +24,7 @@ public sealed class EventBus
     // channel drops a command because no ScriptProcess context was present.
     //
     // Audio, GameEvent, and Debug channels use DropOldest/DropNewest and
-    // never reach this path — their drops are intentional by design and
+    // never reach this path - their drops are intentional by design and
     // counted by the channel itself.
     //
     // The host reads these via the public properties below to surface

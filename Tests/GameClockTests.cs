@@ -153,7 +153,7 @@ public class GameClockTests
     }
     
     // =======================================================================
-    // TIME SCALE — read
+    // TIME SCALE - read
     // =======================================================================
     
     [Fact]
@@ -171,7 +171,7 @@ public class GameClockTests
     }
     
     // =======================================================================
-    // SET TIME SCALE — write, clamp, wrong-type
+    // SET TIME SCALE - write, clamp, wrong-type
     // =======================================================================
     
     [Fact]
@@ -353,7 +353,7 @@ public class GameClockTests
     }
     
     // =======================================================================
-    // TIMER START — one-shot
+    // TIMER START - one-shot
     // =======================================================================
     
     [Fact]
@@ -383,7 +383,7 @@ public class GameClockTests
     [Fact]
     public void TimerStart_MissingCallback_ReturnsFalse()
     {
-        // Only one argument supplied — callback is missing.
+        // Only one argument supplied - callback is missing.
         var result = GameClock.TimerStart(new object[] { 1.0f });
         Assert.IsNotType<long>(result);
     }
@@ -424,7 +424,7 @@ public class GameClockTests
         "(define one-shot-early 0)".Eval();
         "(timer-start 10.0 (lambda () (set! one-shot-early (+ one-shot-early 1))))".Eval();
         
-        // Only 1 frame — nowhere near 10 seconds.
+        // Only 1 frame - nowhere near 10 seconds.
         TickFrames(1);
         
         var count = Assert.IsType<int>("one-shot-early".Eval());
@@ -446,7 +446,7 @@ public class GameClockTests
     }
     
     // =======================================================================
-    // TIMER REPEAT — repeating
+    // TIMER REPEAT - repeating
     // =======================================================================
     
     [Fact]
@@ -535,9 +535,9 @@ public class GameClockTests
     [Fact]
     public void TimerCancel_UnknownHandle_ReturnsFalse()
     {
-        // Handle 999999 was never issued — must not throw, must return #f.
+        // Handle 999999 was never issued - must not throw, must return #f.
         var result = GameClock.TimerCancel(new object[] { 999999L });
-        Assert.IsNotType<bool>(result);   // IsNotType<bool> — it's the #f sentinel
+        Assert.IsNotType<bool>(result);   // IsNotType<bool> - it's the #f sentinel
     }
     
     [Fact]
@@ -547,7 +547,7 @@ public class GameClockTests
             "(timer-start 5.0 (lambda () #t))".Eval());
         GameClock.TimerCancel(new object[] { handle });
         
-        // Second cancel on the same handle — timer is gone, should return #f.
+        // Second cancel on the same handle - timer is gone, should return #f.
         var result = GameClock.TimerCancel(new object[] { handle });
         Assert.IsNotType<bool>(result);
     }
@@ -629,7 +629,7 @@ public class GameClockTests
         // Advance past the delay so the timer fires and is removed.
         TickFrames(10);
         
-        // One-shot timer is gone — remaining must return #f.
+        // One-shot timer is gone - remaining must return #f.
         var result = GameClock.TimerRemaining(new object[] { handle });
         Assert.IsNotType<float>(result);
     }
@@ -650,7 +650,7 @@ public class GameClockTests
     }
     
     // =======================================================================
-    // INTEGRATION — time-scale affects timer fire timing
+    // INTEGRATION - time-scale affects timer fire timing
     // =======================================================================
     
     [Fact]
@@ -661,17 +661,17 @@ public class GameClockTests
         "(define ts-fired 0)".Eval();
         "(timer-start 0.1 (lambda () (set! ts-fired (+ ts-fired 1))))".Eval();
         
-        // 7 frames ≈ 0.117 wall-sec → 0.058 scaled-sec — should NOT have fired.
+        // 7 frames ≈ 0.117 wall-sec → 0.058 scaled-sec - should NOT have fired.
         TickFrames(7);
         Assert.Equal(0, Assert.IsType<int>("ts-fired".Eval()));
         
-        // 13 more frames (total 20 ≈ 0.333 wall-sec → 0.167 scaled-sec) — fired.
+        // 13 more frames (total 20 ≈ 0.333 wall-sec → 0.167 scaled-sec) - fired.
         TickFrames(13);
         Assert.Equal(1, Assert.IsType<int>("ts-fired".Eval()));
     }
     
     // =======================================================================
-    // SCHEME SYMBOL REGISTRATION — verify all symbols are reachable
+    // SCHEME SYMBOL REGISTRATION - verify all symbols are reachable
     // =======================================================================
     
     [Fact]

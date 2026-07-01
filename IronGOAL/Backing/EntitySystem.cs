@@ -90,13 +90,13 @@ public class EntitySystem
     // =======================================================================
     
     private static void PublishGameEvent(GameEventType type, int entityId = -1,
-        int param0 = 0, int param1 = 0,
+        Opcode op = Opcode.Invalid, int param1 = 0,
         int param2 = 0, int param3 = 0)
         => _bus?.PublishGameEvent(new GameEvent
         {
             Type     = type,
             EntityId = entityId,
-            Param0   = param0,
+            Param0   = (int)op,
             Param1   = param1,
             Param2   = param2,
             Param3   = param3,
@@ -140,13 +140,13 @@ public class EntitySystem
     /// Returns <c>null</c> if called outside a process context.</para>
     /// </summary>
     private static object? Query(GameEventType queryEvent, int entityId = -1,
-        int param0 = 0, int param1 = 0, int param2 = 0)
+        Opcode op = Opcode.Invalid, int param1 = 0, int param2 = 0)
     {
         ScriptProcess? proc = ProcessScheduler.CurrentProcess;
         if (proc is null)
         {
             Console.Error.WriteLine(
-                "[EntitySystem] Query called outside a running process — returning null.");
+                "[EntitySystem] Query called outside a running process - returning null.");
             return null;
         }
         
@@ -156,8 +156,7 @@ public class EntitySystem
         // Narrowed to int; handles are issued by Interlocked.Increment from 1
         // so overflow into negative territory is only a concern after ~2 billion
         // spawns - safe for any practical session.
-        PublishGameEvent(queryEvent, entityId, param0, param1, param2,
-            param3: (int)(handle & 0x7FFF_FFFF));
+        PublishGameEvent(queryEvent, entityId, op, param1, param2, param3: (int)(handle & 0x7FFF_FFFF));
         
         // Suspend until the host deposits a response for this process handle.
         proc.SetPredicate(() => _queryResponses.ContainsKey(handle));
@@ -183,8 +182,7 @@ public class EntitySystem
         if (args.Length == 0 || args[0] is not string typeName)
             return "#f".Eval();
         
-        PublishGameEvent(GameEventType.EntitySpawn,
-            param0: typeName.GetHashCode(StringComparison.Ordinal));
+        PublishGameEvent(GameEventType.EntitySpawn);
         return "#t".Eval();
     }
     
@@ -197,7 +195,7 @@ public class EntitySystem
         if (args.Length == 0 || args[0] is not long handle)
             return "#f".Eval();
         
-        PublishGameEvent(GameEventType.EntityKill, entityId: (int)handle);
+        PublishGameEvent(GameEventType.EntityKill, entityId: (int)handle, op: Opcode.Invalid);
         return "#t".Eval();
     }
     
@@ -211,9 +209,7 @@ public class EntitySystem
         if (args.Length == 0 || args[0] is not long handle)
             return "#f".Eval();
         
-        object? result = Query(GameEventType.EntityQuery,
-            entityId: (int)handle,
-            param0:   0);
+        object? result = Query(GameEventType.EntityQuery, entityId: (int)handle, op: Opcode.Exists);
         return result is bool b ? b : "#f".Eval();
     }
     
@@ -238,9 +234,7 @@ public class EntitySystem
         if (args.Length == 0 || args[0] is not long handle)
             return "#f".Eval();
  
-        return Query(GameEventType.EntityQuery,
-            entityId: (int)handle,
-            param0:   10) ?? "#f".Eval();
+        return Query(GameEventType.EntityQuery, entityId: (int)handle, op: Opcode.GetPosition) ?? "#f".Eval();
     }
     
     /// <summary>
@@ -266,9 +260,7 @@ public class EntitySystem
         if (args.Length == 0 || args[0] is not long handle)
             return "#f".Eval();
         
-        return Query(GameEventType.EntityQuery,
-            entityId: (int)handle,
-            param0:   11) ?? "#f".Eval();
+        return Query(GameEventType.EntityQuery, entityId: (int)handle, op: Opcode.GetRotation) ?? "#f".Eval();
     }
     
     /// <summary>
@@ -294,9 +286,7 @@ public class EntitySystem
         if (args.Length == 0 || args[0] is not long handle)
             return "#f".Eval();
         
-        return Query(GameEventType.EntityQuery,
-            entityId: (int)handle,
-            param0:   12) ?? "#f".Eval();
+        return Query(GameEventType.EntityQuery, entityId: (int)handle, op: Opcode.GetScale) ?? "#f".Eval();
     }
     
     /// <summary>
@@ -334,10 +324,7 @@ public class EntitySystem
         if (args.Length < 2 || args[0] is not long handle || args[1] is not string key)
             return "#f".Eval();
         
-        return Query(GameEventType.EntityQuery,
-            entityId: (int)handle,
-            param0:   20,
-            param1:   key.GetHashCode(StringComparison.Ordinal)) ?? "#f".Eval();
+        return Query(GameEventType.EntityQuery, entityId: (int)handle, op: Opcode.GetProperty, param1: key.GetHashCode(StringComparison.Ordinal)) ?? "#f".Eval();
     }
     
     /// <summary>
@@ -350,11 +337,7 @@ public class EntitySystem
         if (args.Length < 3 || args[0] is not long handle || args[1] is not string key)
             return "#f".Eval();
         
-        PublishGameEvent(GameEventType.EntitySetState,
-            entityId: (int)handle,
-            param0:   21,
-            param1:   key.GetHashCode(StringComparison.Ordinal),
-            param2:   args[2]?.GetHashCode() ?? 0);
+        PublishGameEvent(GameEventType.EntitySetState, entityId: (int)handle, op: Opcode.SetProperty, param1: key.GetHashCode(StringComparison.Ordinal), param2: args[2]?.GetHashCode() ?? 0);
         return "#t".Eval();
     }
     
@@ -369,10 +352,7 @@ public class EntitySystem
         if (args.Length < 2 || args[0] is not long handle || args[1] is not string key)
             return "#f".Eval();
         
-        object? result = Query(GameEventType.EntityQuery,
-            entityId: (int)handle,
-            param0:   22,
-            param1:   key.GetHashCode(StringComparison.Ordinal));
+        object? result = Query(GameEventType.EntityQuery, entityId: (int)handle, op: Opcode.HasProperty, param1: key.GetHashCode(StringComparison.Ordinal));
         return result is bool b ? b : "#f".Eval();
     }
     
@@ -391,10 +371,7 @@ public class EntitySystem
         if (args.Length < 2 || args[0] is not long handle || args[1] is not string componentType)
             return "#f".Eval();
         
-        object? result = Query(GameEventType.EntityQuery,
-            entityId: (int)handle,
-            param0:   30,
-            param1:   componentType.GetHashCode(StringComparison.Ordinal));
+        object? result = Query(GameEventType.EntityQuery, entityId: (int)handle, op: Opcode.HasComponent, param1: componentType.GetHashCode(StringComparison.Ordinal));
         return result is bool b ? b : "#f".Eval();
     }
     
@@ -409,10 +386,7 @@ public class EntitySystem
         if (args.Length < 2 || args[0] is not long handle || args[1] is not string componentType)
             return "#f".Eval();
         
-        return Query(GameEventType.EntityQuery,
-            entityId: (int)handle,
-            param0:   31,
-            param1:   componentType.GetHashCode(StringComparison.Ordinal)) ?? "#f".Eval();
+        return Query(GameEventType.EntityQuery, entityId: (int)handle, op: Opcode.GetComponent, param1: componentType.GetHashCode(StringComparison.Ordinal)) ?? "#f".Eval();
     }
     
     // =======================================================================
@@ -430,9 +404,7 @@ public class EntitySystem
         if (args.Length == 0 || args[0] is not string typeName)
             return "#f".Eval();
         
-        return Query(GameEventType.EntityQuery,
-            param0: 40,
-            param1: typeName.GetHashCode(StringComparison.Ordinal)) ?? "#f".Eval();
+        return Query(GameEventType.EntityQuery, entityId: 40, op: Opcode.FindByType, param1: typeName.GetHashCode(StringComparison.Ordinal)) ?? "#f".Eval();
     }
     
     /// <summary>
@@ -446,9 +418,7 @@ public class EntitySystem
         if (args.Length == 0 || args[0] is not string tag)
             return "#f".Eval();
         
-        return Query(GameEventType.EntityQuery,
-            param0: 41,
-            param1: tag.GetHashCode(StringComparison.Ordinal)) ?? "#f".Eval();
+        return Query(GameEventType.EntityQuery, entityId: 41, op: Opcode.FindByTag, param1: tag.GetHashCode(StringComparison.Ordinal)) ?? "#f".Eval();
     }
     
     /// <summary>
@@ -474,11 +444,7 @@ public class EntitySystem
         int packedXY  = Pack(center.X);
         int packedYZ  = (Pack(center.Y) & 0xFFFF) | (((int)(center.Z * 128f) & 0xFFFF));
         
-        return Query(GameEventType.EntityQuery,
-            entityId: Pack(radius),
-            param0:   42,
-            param1:   packedXY,
-            param2:   packedYZ) ?? "#f".Eval();
+        return Query(GameEventType.EntityQuery, entityId: Pack(radius), op: Opcode.FindInRadius, param1: packedXY, param2: packedYZ) ?? "#f".Eval();
     }
     
     /// <summary>
@@ -495,11 +461,7 @@ public class EntitySystem
         
         int packedYZ = (Pack(point.Y) & 0xFFFF) | (((int)(point.Z * 128f) & 0xFFFF)); // first 0x value was 0xFFFF_0000
         
-        return Query(GameEventType.EntityQuery,
-            entityId: typeName.GetHashCode(StringComparison.Ordinal),
-            param0:   43,
-            param1:   Pack(point.X),
-            param2:   packedYZ) ?? "#f".Eval();
+        return Query(GameEventType.EntityQuery, entityId: typeName.GetHashCode(StringComparison.Ordinal), op: Opcode.FindNearest, param1: Pack(point.X), param2: packedYZ) ?? "#f".Eval();
     }
     
     // =======================================================================
@@ -516,10 +478,7 @@ public class EntitySystem
         if (args.Length < 2 || args[0] is not long handle || args[1] is not string tag)
             return "#f".Eval();
         
-        PublishGameEvent(GameEventType.EntitySetState,
-            entityId: (int)handle,
-            param0:   50,
-            param1:   tag.GetHashCode(StringComparison.Ordinal));
+        PublishGameEvent(GameEventType.EntitySetState, entityId: (int)handle, op: Opcode.AddTag, param1: tag.GetHashCode(StringComparison.Ordinal));
         return "#t".Eval();
     }
     
@@ -533,10 +492,7 @@ public class EntitySystem
         if (args.Length < 2 || args[0] is not long handle || args[1] is not string tag)
             return "#f".Eval();
         
-        PublishGameEvent(GameEventType.EntitySetState,
-            entityId: (int)handle,
-            param0:   51,
-            param1:   tag.GetHashCode(StringComparison.Ordinal));
+        PublishGameEvent(GameEventType.EntitySetState, entityId: (int)handle, op: Opcode.RemoveTag, param1: tag.GetHashCode(StringComparison.Ordinal));
         return "#t".Eval();
     }
     
@@ -551,10 +507,7 @@ public class EntitySystem
         if (args.Length < 2 || args[0] is not long handle || args[1] is not string tag)
             return "#f".Eval();
         
-        object? result = Query(GameEventType.EntityQuery,
-            entityId: (int)handle,
-            param0:   52,
-            param1:   tag.GetHashCode(StringComparison.Ordinal));
+        object? result = Query(GameEventType.EntityQuery, entityId: (int)handle, op: Opcode.HasTag, param1: tag.GetHashCode(StringComparison.Ordinal));
         return result is bool b ? b : "#f".Eval();
     }
     
@@ -572,10 +525,7 @@ public class EntitySystem
         if (args.Length < 2 || args[0] is not long entityHandle || args[1] is not long processHandle)
             return "#f".Eval();
         
-        PublishGameEvent(GameEventType.EntitySetState,
-            entityId: (int)entityHandle,
-            param0:   60,
-            param1:   (int)(processHandle & 0x7FFF_FFFF));
+        PublishGameEvent(GameEventType.EntitySetState, entityId: (int)entityHandle, op: Opcode.BindProcess, param1: (int)(processHandle & 0x7FFF_FFFF));
         return "#t".Eval();
     }
     
@@ -589,9 +539,7 @@ public class EntitySystem
         if (args.Length == 0 || args[0] is not long handle)
             return "#f".Eval();
         
-        return Query(GameEventType.EntityQuery,
-            entityId: (int)handle,
-            param0:   61) ?? "#f".Eval();
+        return Query(GameEventType.EntityQuery, entityId: (int)handle, op: Opcode.GetProcess) ?? "#f".Eval();
     }
     
     /// <summary>
@@ -605,8 +553,6 @@ public class EntitySystem
         if (args.Length == 0 || args[0] is not long processHandle)
             return "#f".Eval();
         
-        return Query(GameEventType.EntityQuery,
-            entityId: (int)(processHandle & 0x7FFF_FFFF),
-            param0:   62) ?? "#f".Eval();
+        return Query(GameEventType.EntityQuery, entityId: (int)(processHandle & 0x7FFF_FFFF), op: Opcode.GetEntity) ?? "#f".Eval();
     }
 }

@@ -44,16 +44,6 @@ public class AssetSystem
     internal static void DeliverQueryResponse(long processHandle, object? value)
         => _queryResponses[processHandle] = value;
     
-    // TODO: Check the opcodes.
-    // Load queries — 700–709
-    private const int OpLoad       = 700;
-    private const int OpLoadObject = 701;
-    private const int OpLoadBinary = 702;
-    private const int OpDgoLoad    = 703;
-    
-    // Unload command — 710
-    private const int OpUnload = 710;
-    
     // =======================================================================
     // INTERNAL HELPERS
     // =======================================================================
@@ -76,13 +66,13 @@ public class AssetSystem
     /// context.  Returns <c>null</c> when called outside a process.
     /// </para>
     /// </summary>
-    private static object? QueryLoad(int opcode, string path)
+    private static object? QueryLoad(Opcode op, string path)
     {
         ScriptProcess? proc = ProcessScheduler.CurrentProcess;
         if (proc is null)
         {
             Console.Error.WriteLine(
-                "[AssetSystem] Query called outside a running process — returning null.");
+                "[AssetSystem] Query called outside a running process - returning null.");
             return null;
         }
         
@@ -92,7 +82,7 @@ public class AssetSystem
         {
             Type     = GameEventType.EntityQuery,
             EntityId = -1,
-            Param0   = opcode,
+            Param0   = (int)op,
             Param1   = Hash(path),
             Param2   = 0,
             Param3   = (int)(handle & 0x7FFF_FFFF),
@@ -110,12 +100,12 @@ public class AssetSystem
     /// Publishes an <see cref="GameEventType.EntitySetState"/> command.
     /// Fire-and-return; no process suspension.
     /// </summary>
-    private static void PublishSetState(int opcode, int param1)
+    private static void PublishSetState(Opcode op, int param1)
         => _bus?.PublishGameEvent(new GameEvent
         {
             Type     = GameEventType.EntitySetState,
             EntityId = -1,
-            Param0   = opcode,
+            Param0   = (int)op,
             Param1   = param1,
         });
     
@@ -127,7 +117,7 @@ public class AssetSystem
     /// Loads a GOAL script object from the given path.  Suspends the calling
     /// process until the host responds with an asset handle.
     ///
-    /// <para>Scheme: <c>(load path)</c> → asset handle or <c>#f</c></para>
+    /// <para>Scheme: <c>(load path)</c> -> asset handle or <c>#f</c></para>
     /// </para>
     /// </summary>
     public static object Load(object[] args)
@@ -135,7 +125,7 @@ public class AssetSystem
         if (args.Length < 1 || args[0] is not string path)
             return "#f".Eval();
         
-        object? result = QueryLoad(OpLoad, path);
+        object? result = QueryLoad(Opcode.Load, path);
         return result is long handle ? (object)handle : "#f".Eval();
     }
     
@@ -144,14 +134,14 @@ public class AssetSystem
     /// to <c>load</c> but signals to the host that the target may be any
     /// object type, not specifically a script file.
     ///
-    /// <para>Scheme: <c>(loado path)</c> → asset handle or <c>#f</c></para>
+    /// <para>Scheme: <c>(loado path)</c> -> asset handle or <c>#f</c></para>
     /// </summary>
     public static object LoadObject(object[] args)
     {
         if (args.Length < 1 || args[0] is not string path)
             return "#f".Eval();
  
-        object? result = QueryLoad(OpLoadObject, path);
+        object? result = QueryLoad(Opcode.LoadObject, path);
         return result is long handle ? (object)handle : "#f".Eval();
     }
     
@@ -159,14 +149,14 @@ public class AssetSystem
     /// Loads a raw binary blob from the given path.  The host treats the
     /// payload as opaque bytes with no GOAL object header.
     ///
-    /// <para>Scheme: <c>(loadb path)</c> → asset handle or <c>#f</c></para>
+    /// <para>Scheme: <c>(loadb path)</c> -> asset handle or <c>#f</c></para>
     /// </summary>
     public static object LoadBinary(object[] args)
     {
         if (args.Length < 1 || args[0] is not string path)
             return "#f".Eval();
         
-        object? result = QueryLoad(OpLoadBinary, path);
+        object? result = QueryLoad(Opcode.LoadBinary, path);
         return result is long handle ? (object)handle : "#f".Eval();
     }
     
@@ -177,7 +167,7 @@ public class AssetSystem
     /// load order, and run each Top Level segment.  In IronGOAL the host
     /// is responsible for the equivalent managed archive pipeline.
     ///
-    /// <para>Scheme: <c>(dgo-load name)</c> → archive handle or <c>#f</c></para>
+    /// <para>Scheme: <c>(dgo-load name)</c> -> archive handle or <c>#f</c></para>
     /// </para>
     /// </summary>
     public static object DgoLoad(object[] args)
@@ -185,7 +175,7 @@ public class AssetSystem
         if (args.Length < 1 || args[0] is not string name)
             return "#f".Eval();
  
-        object? result = QueryLoad(OpDgoLoad, name);
+        object? result = QueryLoad(Opcode.DgoLoad, name);
         return result is long handle ? (object)handle : "#f".Eval();
     }
     
@@ -194,14 +184,14 @@ public class AssetSystem
     /// host decrements the reference count or frees the resource on its next
     /// drain cycle.
     ///
-    /// <para>Scheme: <c>(unload handle)</c> → <c>#t</c></para>
+    /// <para>Scheme: <c>(unload handle)</c> -> <c>#t</c></para>
     /// </summary>
     public static object Unload(object[] args)
     {
         if (args.Length < 1 || args[0] is not long assetHandle)
             return "#f".Eval();
         
-        PublishSetState(OpUnload, (int)(assetHandle & 0x7FFF_FFFF));
+        PublishSetState(Opcode.Unload, (int)(assetHandle & 0x7FFF_FFFF));
         return "#t".Eval();
     }
 }

@@ -49,7 +49,7 @@ public class EntitySystemTests
     [Fact]
     public void Spawn_EmptyArgs_ReturnsFalse()
     {
-        // object[] args is empty — guard fires.
+        // object[] args is empty - guard fires.
         object result = EntitySystem.Spawn(Array.Empty<object>());
         Assert.True(IsFalse(result));
     }

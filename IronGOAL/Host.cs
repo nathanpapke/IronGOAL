@@ -24,7 +24,7 @@ public sealed class Host : IDisposable
     
     /// <summary>
     /// The IronScheme top-level environment this <see cref="Host"/>'s
-    /// <c>Kernel</c> registered its symbols into — either the value passed
+    /// <c>Kernel</c> registered its symbols into - either the value passed
     /// via <see cref="GoalRuntimeConfig.SchemeEnvironment"/>, or the one
     /// IronGOAL obtained for itself if none was passed.
     ///

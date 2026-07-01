@@ -19,24 +19,11 @@ public class GameMemory
     /// </summary>
     public static void Install(EventBus bus) => _bus = bus;
     
-    // TODO: Plan all project OpCodes.
-    // The values below are provisional.  A full inventory pass across all
-    // backing classes is required before these are locked.
-    // Memory system is assigned the 900–999 range (reserved in the opcode
-    // proposal) pending that pass.
- 
-    private const int OpAlloc               = 900; // query -> allocation handle (long) or null
-    private const int OpNewDynamicStructure = 901; // query -> typed handle; delegates to OpAlloc
-    private const int OpHeapBytesUsed       = 910; // query -> long bytes used
-    private const int OpHeapBytesTotal      = 911; // query -> long bytes total
-    private const int OpSerialize           = 920; // command; fire-and-return
-    private const int OpDeserialize         = 921; // command; fire-and-return
-    
     // =======================================================================
     // QUERY RESPONSE TABLE
     // =======================================================================
     
-    // Standard suspend/wake table — identical pattern to PhysicsSystem,
+    // Standard suspend/wake table - identical pattern to PhysicsSystem,
     // AnimationSystem, EntitySystem, etc.
     // Key   = process handle of the suspended ScriptProcess.
     // Value = the answer the host deposited via DeliverQueryResponse.
@@ -133,13 +120,13 @@ public class GameMemory
     /// <see cref="DeliverQueryResponse"/>.  Returns the deposited value, or
     /// <c>null</c> if called outside a <see cref="ScriptProcess"/>.
     /// </summary>
-    private static object? Query(int param0, int param1 = 0, int param2 = 0)
+    private static object? Query(Opcode op, int param1 = 0, int param2 = 0)
     {
         ScriptProcess? proc = ProcessScheduler.CurrentProcess;
         if (proc is null)
         {
             Console.Error.WriteLine(
-                "[GameMemory] Query called outside a running process — returning null.");
+                "[GameMemory] Query called outside a running process - returning null.");
             return null;
         }
         
@@ -149,7 +136,7 @@ public class GameMemory
         {
             Type     = GameEventType.EntityQuery,
             EntityId = -1,
-            Param0   = param0,
+            Param0   = (int)op,
             Param1   = param1,
             Param2   = param2,
             Param3   = (int)(handle & 0x7FFF_FFFF),
@@ -211,7 +198,7 @@ public class GameMemory
         {
             Type     = GameEventType.EntityQuery,
             EntityId = -1,
-            Param0   = 900,  // OpAlloc - host dispatches on this
+            Param0   = (int)Opcode.Alloc,
             Param1   = size,
             Param2   = flags,
             Param3   = (int)(procHandle & 0x7FFF_FFFF),
@@ -397,7 +384,7 @@ public class GameMemory
         
         MemoryArenaId arena = ParseArena(arenaName);
         
-        object? result = Query(OpHeapBytesUsed, (int)arena);
+        object? result = Query(Opcode.HeapBytesUsed, (int)arena);
         if (result is null) return "#f".Eval();
         return result;
     }
@@ -415,7 +402,7 @@ public class GameMemory
         
         MemoryArenaId arena = ParseArena(arenaName);
         
-        object? result = Query(OpHeapBytesTotal, (int)arena);
+        object? result = Query(Opcode.HeapBytesTotal, (int)arena);
         if (result is null) return "#f".Eval();
         return result;
     }
@@ -481,7 +468,7 @@ public class GameMemory
         {
             Type     = GameEventType.EntitySetState,
             EntityId = (int)(handle & 0x7FFF_FFFF),
-            Param0   = 920,  // OpSerialize - host dispatches on this
+            Param0   = (int)Opcode.Serialize,
             Param1   = 0,
             Param2   = 0,
             Param3   = 0,
@@ -510,7 +497,7 @@ public class GameMemory
         {
             Type     = GameEventType.EntitySetState,
             EntityId = (int)(blobHandle & 0x7FFF_FFFF),
-            Param0   = 921,  // OpDeserialize - host dispatches on this
+            Param0   = (int)Opcode.Deserialize,
             Param1   = typeHash,
             Param2   = 0,
             Param3   = 0,
