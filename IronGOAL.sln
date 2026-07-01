@@ -2,7 +2,7 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IronGOAL", "IronGOAL\IronGOAL.csproj", "{54ABEB91-362D-4C74-A839-2F074A7ECED0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Host", "Host\Host.csproj", "{563ECD55-FE4E-40A2-ACA9-BE1DDA2D4DD9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console", "Console\Console.csproj", "{563ECD55-FE4E-40A2-ACA9-BE1DDA2D4DD9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{F772010F-847C-490A-8C0F-A42764C7211B}"
 EndProject

@@ -23,7 +23,7 @@ public class GameClockTests
     {
         var result = Host.Create(Config);
         Assert.True(result.IsSuccess,
-            $"Host.Create failed: {result.ErrorMessage}");
+            $"Console.Create failed: {result.ErrorMessage}");
         _host = result.Value!;
     }
     

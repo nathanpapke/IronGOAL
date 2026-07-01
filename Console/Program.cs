@@ -14,7 +14,7 @@ var config = new GoalRuntimeConfig
 var result = Host.Create(config);
 if (result.IsFailure)
 {
-    Console.WriteLine($"Host.Create failed: {result.ErrorMessage}");
+    Console.WriteLine($"Console.Create failed: {result.ErrorMessage}");
     return;
 }
 

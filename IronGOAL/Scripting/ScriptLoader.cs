@@ -39,7 +39,7 @@ public sealed class ScriptLoader
     
     /// <summary>
     /// Read exactly one top-level form from <paramref name="expression"/>
-    /// and evaluate it - the primitive behind <c>Host.EvaluateForm</c> /
+    /// and evaluate it - the primitive behind <c>Console.EvaluateForm</c> /
     /// <c>Kernel.EvaluateForm</c> for REPL-style single-form input.
     ///
     /// <para>

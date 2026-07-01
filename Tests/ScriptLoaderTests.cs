@@ -21,11 +21,11 @@ public class ScriptLoaderTests
     public ScriptLoaderTests()
     {
         var result = Host.Create(Config);
-        Assert.True(result.IsSuccess, $"Host.Create failed: {result.ErrorMessage}");
+        Assert.True(result.IsSuccess, $"Console.Create failed: {result.ErrorMessage}");
         _host = result.Value!;
         
         // ScriptLoader is public and stateless, so it can be exercised
-        // directly here for white-box testing alongside the Host/Kernel
+        // directly here for white-box testing alongside the Console/Kernel
         // surface that wraps it for real callers.
         _loader = new ScriptLoader(_host.SchemeEnvironment);
     }
@@ -233,7 +233,7 @@ public class ScriptLoaderTests
     }
     
     // =======================================================================
-    // Host.LoadScript - result-propagation fix
+    // Console.LoadScript - result-propagation fix
     // (previously discarded Kernel.LoadFile's GoalResult and always
     //  returned GoalResult.Okay)
     // =======================================================================
@@ -278,7 +278,7 @@ public class ScriptLoaderTests
     }
     
     // =======================================================================
-    // Host.EvaluateForm
+    // Console.EvaluateForm
     // =======================================================================
     
     [Fact]
@@ -320,7 +320,7 @@ public class ScriptLoaderTests
         };
         
         var result = Host.Create(config);
-        Assert.True(result.IsSuccess, $"Host.Create failed: {result.ErrorMessage}");
+        Assert.True(result.IsSuccess, $"Console.Create failed: {result.ErrorMessage}");
         var host = result.Value!;
         
         var formResult = host.EvaluateForm("(car '())");
@@ -351,7 +351,7 @@ public class ScriptLoaderTests
         };
         
         var result = Host.Create(config);
-        Assert.True(result.IsSuccess, $"Host.Create failed: {result.ErrorMessage}");
+        Assert.True(result.IsSuccess, $"Console.Create failed: {result.ErrorMessage}");
         var host = result.Value!;
         host.Dispose();
         

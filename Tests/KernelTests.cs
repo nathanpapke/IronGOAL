@@ -33,7 +33,7 @@ public class KernelTests
     }
     
     // =======================================================================
-    // LIFECYCLE - Host.Create config validation
+    // LIFECYCLE - Console.Create config validation
     // =======================================================================
     
     [Fact]

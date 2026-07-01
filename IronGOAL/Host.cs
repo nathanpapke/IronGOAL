@@ -63,7 +63,7 @@ public sealed class Host : IDisposable
             var kernel  = new Kernel(config);
             var runtime = new Host(kernel, config.LogHandler);
             config.LogHandler(GoalLogSeverity.Info,
-                GoalErrorCode.None, "Host created successfully.");
+                GoalErrorCode.None, "Console created successfully.");
             return GoalResult<Host>.Okay(runtime);
         }
         catch (OutOfMemoryException ex)
@@ -184,7 +184,7 @@ public sealed class Host : IDisposable
         if (_disposed)
         {
             _log(GoalLogSeverity.Error, GoalErrorCode.RuntimeDisposed,
-                "Cannot evaluate: Host has been disposed.");
+                "Cannot evaluate: Console has been disposed.");
             return null;
         }
         
@@ -227,7 +227,7 @@ public sealed class Host : IDisposable
     {
         if (_disposed)
             return FormResult.Failed(new SchemeForm(null, 0, expression),
-                "Cannot evaluate: Host has been disposed.");
+                "Cannot evaluate: Console has been disposed.");
         
         if (string.IsNullOrWhiteSpace(expression))
             return FormResult.Failed(new SchemeForm(null, 0, expression),

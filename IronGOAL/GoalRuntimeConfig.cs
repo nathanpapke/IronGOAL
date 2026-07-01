@@ -21,7 +21,7 @@ public sealed class GoalRuntimeConfig
     /// <summary>
     /// Size in bytes of the global heap arena. Long-lived game data -
     /// entities, level resources, type tables - is allocated here.
-    /// Default: 64 MB, matching the IronGOAL.Host dev configuration.
+    /// Default: 64 MB, matching the IronGOAL.Console dev configuration.
     /// </summary>
     public int GlobalHeapSize { get; init; } = 64 * 1024 * 1024;
     
@@ -80,7 +80,7 @@ public sealed class GoalRuntimeConfig
     /// <summary>
     /// An existing IronScheme top-level environment object - the value
     /// returned by <c>"(interaction-environment)".Eval()</c> - obtained by
-    /// the host program before constructing this <c>Host</c>.
+    /// the host program before constructing this <c>Console</c>.
     /// </summary>
     public object? SchemeEnvironment { get; init; } = null;
     
@@ -89,7 +89,7 @@ public sealed class GoalRuntimeConfig
     // =======================================================================
 
     /// <summary>
-    /// Host-provided handler for <c>(sql-query ...)</c> calls from scripts.
+    /// Console-provided handler for <c>(sql-query ...)</c> calls from scripts.
     /// <para>
     /// The delegate receives the raw SQL string and must return a
     /// <c>string[]</c> where <c>[0]</c> is the content-type name (a symbol

@@ -82,7 +82,7 @@ public static class ChannelDrain
     /// Continuously drains commands as they arrive, awaiting each handler.
     /// Runs until the channel is completed (on shutdown) or the token is
     /// canceled.  This is the correct pattern for the audio consumer thread
-    /// and the IronGOAL.Host stdout debug sink.
+    /// and the IronGOAL.Console stdout debug sink.
     public static async Task ConsumeAsync<TCommand>(
         ChannelReader<TCommand>   reader,
         Func<TCommand, ValueTask> handler,

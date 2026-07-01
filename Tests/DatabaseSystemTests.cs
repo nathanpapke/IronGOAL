@@ -18,7 +18,7 @@ public sealed class DatabaseSystemTests : IDisposable
         };
         
         var result = Host.Create(config);
-        Assert.True(result.IsSuccess, $"Host.Create failed: {result.ErrorMessage}");
+        Assert.True(result.IsSuccess, $"Console.Create failed: {result.ErrorMessage}");
         _host = result.Value;
     }
     
